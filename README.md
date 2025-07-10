@@ -15,45 +15,54 @@ This project demonstrates full integration with the [Heidi AI API](https://regis
 
 ```text
 heidi-ai-integration/
-├── .env                        # API credentials (not pushed to GitHub)
+├── .env                          # API credentials and config values
 ├── .gitignore
-├── README.md                   # Project overview and usage guide
-├── requirements.txt            # Python dependencies
+├── README.md                     # Project overview and setup guide
+├── requirements.txt              # Python dependencies
 │
-├── app.py                      # Flask application entry point
+├── app.py                        # Flask application entry point
 │
-├── heidi_client/               # Heidi API integration logic
+├── heidi_client/                 # Heidi API integration logic
 │   ├── __init__.py
-│   ├── config.py               # Load API_KEY, EMAIL, etc. from .env
-│   ├── auth.py                 # get_token()
-│   ├── session.py              # create_session(), update_session()
-│   ├── transcription.py        # upload, finish, and retrieve transcript
-│   ├── consult_note.py         # generate consult notes
-│   ├── ask_ai.py               # ask_heidi() logic for AI Q&A
+│   ├── config.py                 # Load values from .env
+│   ├── auth.py                   # get_token()
+│   ├── session.py                # create/update session
+│   ├── transcription.py          # upload and retrieve transcript
+│   ├── consult_note.py           # generate consult notes
+│   ├── ask_ai.py                 # ask_heidi() logic
 │
-├── routes/                     # Flask route handlers
+├── routes/                       # Flask API route handlers
 │   ├── __init__.py
-│   ├── sessions.py             # /create-session, /update-session
-│   ├── consult.py              # /generate-note
-│   ├── transcription.py        # /upload-audio, /get-transcript
-│   ├── ask.py                  # /ask-ai
+│   ├── auth.py                   # /get-jwt-token
+│   ├── consult.py                # /generate-note
+│   ├── transcription.py          # /upload-audio, /get-transcript
+│   ├── ask.py                    # /ask-ai
+│   ├── context.py                # /get-context/<patient_id> ← new: provide patient context
+│   ├── notes.py                  # /save-note, /save-document ← new: store pushed notes/docs
+│   ├── session_cache.py          # session tracking / restore support ← new
 │
-├── static/                     # Static assets (for widget and audio)
+├── static/                       # Static assets (served to browser)
 │   ├── js/
+│   │   └── heidi_widget.js       # Frontend widget logic: open, callbacks, setPatient, etc.
 │   ├── css/
 │   └── audio/
 │
-├── templates/                  # HTML templates (widget demo page)
-│   └── index.html              # Optionally embed widget here
+├── templates/                    # Jinja2 HTML templates
+│   └── index.html                # Widget demo UI (injects Heidi + controls)
 │
-├── scripts/                    # CLI/utility scripts
-│   ├── ask_ai.py               # Ask Heidi via CLI
-│   ├── test_session.py         # Create & update a session
-│   ├── upload_audio.py         # Upload audio & transcribe
-│   └── generate_note.py        # Generate consult note
+├── scripts/                      # CLI tools for quick testing
+│   ├── ask_ai.py
+│   ├── test_session.py
+│   ├── upload_audio.py
+│   └── generate_note.py
 │
-└── tests/                      # Optional: Unit tests
-    └── test_auth.py
+├── tests/                        # Unit/integration tests
+│   ├── test_auth.py
+│   ├── test_notes.py             # ← new: test saving pushed note/doc
+│   └── test_context.py           # ← new: test patient context API
+│
+└── migrations/                   # (optional) For database schema tracking if using DB
+
 ```
 
 ## ✅ What Can Be Prebuilt Before the Hackathon?
