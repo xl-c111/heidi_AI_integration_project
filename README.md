@@ -82,12 +82,12 @@ HEIDI_USER_ID=your_user_id
 
 3. Install dependencies:
 ```bash
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 4. Run the Flask app:
 ```bash
-python app.py
+python3 app.py
 ```
 
 ---
