@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify
-from .heidi_api import get_jwt_token
+from app.api.auth import get_jwt_token
 
-main = Blueprint('main', __name__)
+main = Blueprint('auth_main', __name__)
 
 @main.route('/')
 def home():

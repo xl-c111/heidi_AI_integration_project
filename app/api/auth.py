@@ -1,8 +1,9 @@
 import os
 import requests
 
+from app.api import BASE_URL
 def get_jwt_token():
-    url = "https://registrar.api.heidihealth.com/api/v2/ml-scribe/open-api/jwt"
+    url = f"{BASE_URL}/jwt"
 
     headers = {
         "Heidi-Api-Key": os.getenv("HEIDI_API_KEY")
