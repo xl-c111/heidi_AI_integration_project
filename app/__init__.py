@@ -20,4 +20,8 @@ def create_app():
 
     from app.routes.session import session_bp as sessions_bp
     app.register_blueprint(sessions_bp)
+
+    from app.routes.ask_heidi import ask_heidi_bp
+    app.register_blueprint(ask_heidi_bp)
+    
     return app
