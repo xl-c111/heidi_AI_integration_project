@@ -11,7 +11,10 @@ def create_app():
     from .routes.auth import main as main_routes
     app.register_blueprint(main_routes)
 
-    from .routes.consult import main as main_consult_routes
-    app.register_blueprint(main_consult_routes)
+    from app.routes.consult import consult_bp
+    app.register_blueprint(consult_bp)
+
+    from app.routes.transcript import transcript_bp
+    app.register_blueprint(transcript_bp)
     return app
 
