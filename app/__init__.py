@@ -2,6 +2,7 @@ from flask import Flask
 from dotenv import load_dotenv
 import os
 
+
 def create_app():
     load_dotenv()
 
@@ -16,5 +17,7 @@ def create_app():
 
     from app.routes.transcript import transcript_bp
     app.register_blueprint(transcript_bp)
-    return app
 
+    from app.routes.session import session_bp as sessions_bp
+    app.register_blueprint(sessions_bp)
+    return app

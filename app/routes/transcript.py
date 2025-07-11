@@ -3,9 +3,11 @@ import os
 from flask import Blueprint, request, jsonify
 from app.api.transcript import start_transcription, upload_audio, finish_transcription, get_transcript
 from app.api.auth import get_jwt_token
-from app.api.consult import create_session, get_consult_note_templates, generate_consult_note
+from app.api.consult import get_consult_note_templates, generate_consult_note
+from app.api.session import create_session
 
 transcript_bp = Blueprint('transcript', __name__)
+
 
 @transcript_bp.route('/transcript/start', methods=['POST'])
 def route_start_transcription():
@@ -50,8 +52,6 @@ def route_view_transcript():
     return jsonify(result)
 
 
-
-
 @transcript_bp.route('/demo/full-transcript', methods=['POST'])
 def full_transcription_demo():
     jwt = get_jwt_token()
@@ -71,7 +71,8 @@ def full_transcription_demo():
     if not os.path.exists(audio_file_path):
         return jsonify({"error": True, "message": "Audio file missing on server"})
 
-    upload_result = upload_audio(jwt, session_id, recording_id, audio_file_path)
+    upload_result = upload_audio(
+        jwt, session_id, recording_id, audio_file_path)
     if not upload_result.get("is_success"):
         return jsonify({"error": True, "message": "Audio upload failed", "details": upload_result})
 
@@ -88,5 +89,6 @@ def full_transcription_demo():
     template_id = templates["templates"][0]["id"]
 
     # Step 6: Generate consult note
-    note = generate_consult_note(jwt, session_id, template_id, voice_style="BRIEF", brain="LEFT")
+    note = generate_consult_note(
+        jwt, session_id, template_id, voice_style="BRIEF", brain="LEFT")
     return jsonify({"note": note})
