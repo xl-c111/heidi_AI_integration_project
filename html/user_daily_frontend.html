@@ -872,20 +872,16 @@
 
 
             <!-- Progress Overview -->
-            <div class="card">
+         
+                <div class="step voice-section">
                 <h2>📋 Step 1: Upload Your Medical Photos</h2>
+                <p style="margin-bottom: 15px;"> Upload a picture of your surgical wound. </p>
                 <div class="upload-area" onclick="document.getElementById('file-input').click()">
                     <div class="upload-text">📄 Click to upload or drag & drop</div>
                     <div class="upload-subtext">Upload Photo Here(JPG, PNG, PDF)</div>
                 </div>
-                <input type="file" id="file-input" class="file-input" accept=".jpg,.jpeg,.png,.pdf" onchange="handleFileUpload(event)">
 
-                <!-- Alternative: Manual text input for demo -->
-                <div class="text-input-area">
-                    <h4 style="margin-bottom: 10px;">Ask your questions here</h4>
-                    <textarea id="document-text" placeholder="Example: How often do I need to take Ibuprofen today? My leg is numb, what do you recommend doing?"></textarea>
-                    <button class="process-btn" onclick="processDocumentText()">📋 Submit Question</button>
-                </div>
+                <input type="file" id="file-input" class="file-input" accept=".jpg,.jpeg,.png,.pdf" onchange="handleFileUpload(event)">
 
                 <div class="loading" id="upload-loading">
                     <div class="spinner"></div>
@@ -901,6 +897,7 @@
 
                 <div class="success-message" id="success-message">
                     ✅ Care plan generated successfully! Scroll down to ask questions.
+                </div>
                 </div>
                 
                 <!-- Step 2: Voice Chat -->
@@ -928,7 +925,7 @@
                     <p>Processing your question...</p>
                 </div>
             </div>
-            </div>
+        
 
              
             </div>
