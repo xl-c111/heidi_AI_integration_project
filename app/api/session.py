@@ -32,9 +32,12 @@ def create_session(jwt_token):
 
 
 def get_session_details(jwt_token, session_id):
+    print(os.getenv("HEIDI_API_KEY"))
     url = f"{BASE_URL}/sessions/{session_id}"
     headers = {
-        "Authorization": f"Bearer {jwt_token}"
+        "Authorization": f"Bearer {jwt_token}",
+        "Content-Type": "application/json",
+        "Heidi-Api-Key": os.getenv("HEIDI_API_KEY")
     }
     try:
         response = requests.get(url, headers=headers)
