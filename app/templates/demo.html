@@ -113,23 +113,6 @@
             resize: vertical;
         }
 
-        .process-btn {
-            background: #4facfe;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            margin-top: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .process-btn:hover {
-            background: #2563eb;
-            transform: translateY(-2px);
-        }
-
         .care-plan {
             background: white;
             border-radius: 10px;
@@ -180,6 +163,7 @@
             cursor: pointer;
             font-size: 1rem;
             transition: all 0.3s ease;
+            margin-top: 10px;
         }
 
         .btn:hover {
@@ -295,6 +279,29 @@
             font-size: 0.9rem;
         }
 
+        .ask-btn:hover {
+            background: #059669;
+        }
+
+        .ask-btn:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #ef4444;
+            color: #dc2626;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
         .success-message {
             background: #dcfce7;
             border: 1px solid #16a34a;
@@ -327,11 +334,11 @@
                 </div>
                 <input type="file" id="file-input" class="file-input" accept=".jpg,.jpeg,.png,.pdf" onchange="handleFileUpload(event)">
 
-                <!-- Alternative: Manual text input for demo -->
+                <!-- Manual text input area -->
                 <div class="text-input-area">
                     <h4 style="margin-bottom: 10px;">Or paste your discharge instructions here:</h4>
                     <textarea id="document-text" placeholder="Example: Patient discharged after knee surgery. Take Ibuprofen 400mg every 6 hours with food. Short walks recommended every 2 hours. No lifting over 10 pounds for 2 weeks. Follow-up appointment in 1 week. Watch for fever, redness, or unusual swelling..."></textarea>
-                    <button class="process-btn" onclick="processDocumentText()">📋 Generate Care Plan</button>
+                    <button class="btn" onclick="processDocumentText()" id="process-btn">📋 Generate Care Plan</button>
                 </div>
 
                 <div class="loading" id="upload-loading">
@@ -339,15 +346,19 @@
                     <p>Processing your document and generating care plan...</p>
                 </div>
 
+                <div class="success-message" id="success-message">
+                    ✅ Care plan generated successfully! Scroll down to ask questions.
+                </div>
+
+                <div class="error-message" id="error-message">
+                    <!-- Error messages will appear here -->
+                </div>
+
                 <div class="care-plan" id="care-plan">
                     <h3>🎯 Your Personalized Care Plan</h3>
                     <div id="care-plan-content">
                         <!-- Care plan will be populated here -->
                     </div>
-                </div>
-
-                <div class="success-message" id="success-message">
-                    ✅ Care plan generated successfully! Scroll down to ask questions.
                 </div>
             </div>
 
@@ -359,21 +370,11 @@
                 <button class="record-btn" id="record-btn" onclick="toggleRecording()">🎤</button>
                 <p style="text-align: center; color: #64748b; margin-bottom: 15px;" id="record-status">Click to start recording</p>
 
-                <!-- Add this in the Step 2 voice section, after the microphone button -->
-                <div style="text-align: center; margin: 15px 0;">
-                    <button class="btn" onclick="testWithAudioFile()" style="background: #f59e0b;">
-                        🎵 Test with Audio File
-                    </button>
-                    <p style="font-size: 0.9rem; color: #6b7280; margin-top: 5px;">
-                        Use pre-recorded audio for testing
-                    </p>
-                </div>
-
-                <!-- Alternative: Text input for questions -->
+                <!-- Text question area -->
                 <div class="text-question-area">
                     <h4 style="margin-bottom: 10px;">Or type your question:</h4>
                     <input type="text" id="question-input" placeholder="Ask about pain levels, activity restrictions, medication side effects, etc.">
-                    <button class="ask-btn" onclick="askTextQuestion()">Ask Heidi AI</button>
+                    <button class="ask-btn" onclick="askTextQuestion()" id="ask-btn">Ask Heidi AI</button>
                 </div>
 
                 <div class="chat-response" id="chat-response">
@@ -384,6 +385,10 @@
                 <div class="loading" id="voice-loading">
                     <div class="spinner"></div>
                     <p>Processing your question...</p>
+                </div>
+
+                <div class="error-message" id="question-error-message">
+                    <!-- Question error messages will appear here -->
                 </div>
             </div>
 
@@ -397,153 +402,201 @@
     </div>
 
     <script>
-        // Replace the JavaScript section in your demo.html with this:
+        // Global variables
         let isRecording = false;
         let mediaRecorder = null;
         let audioChunks = [];
-        let currentSessionId = 'demo-session-' + Date.now();
+        let currentSessionId = null;
 
-        function handleFileUpload(event) {
-        
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const loading = document.getElementById('upload-loading');
-    const carePlan = document.getElementById('care-plan');
-    const successMessage = document.getElementById('success-message');
-
-    loading.classList.add('show');
-    carePlan.classList.remove('show');
-    successMessage.classList.remove('show');
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    fetch('/upload-document', {
-        method: 'POST',
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.error) {
-            alert('Error: ' + data.error);
-            loading.classList.remove('show');
-            return;
+        // Utility functions
+        function showElement(elementId) {
+            const element = document.getElementById(elementId);
+            if (element) element.classList.add('show');
         }
 
-        const text = data.text || '';
-        generateSmartCarePlan(text);
-        document.getElementById('document-text').value = text;
-        loading.classList.remove('show');
-        carePlan.classList.add('show');
-        successMessage.classList.add('show');
+        function hideElement(elementId) {
+            const element = document.getElementById(elementId);
+            if (element) element.classList.remove('show');
+        }
 
-        setTimeout(() => {
-            successMessage.classList.remove('show');
-        }, 3000);
-    })
-    .catch(err => {
-        alert('Something went wrong: ' + err.message);
-        loading.classList.remove('show');
-    });
-}
+        function showError(message, elementId = 'error-message') {
+            const errorElement = document.getElementById(elementId);
+            if (errorElement) {
+                errorElement.textContent = message;
+                errorElement.classList.add('show');
+            }
+            console.error('Error:', message);
+        }
 
+        function hideAllMessages() {
+            hideElement('error-message');
+            hideElement('question-error-message');
+            hideElement('success-message');
+        }
 
-        // Process manual text input
+        // File upload handling (keep original design, but add API call option)
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            hideAllMessages();
+            showElement('upload-loading');
+            hideElement('care-plan');
+
+            // For now, we'll use mock data for file upload
+            // In a real implementation, you'd extract text from the file first
+            setTimeout(() => {
+                generateMockCarePlan();
+                hideElement('upload-loading');
+                showElement('care-plan');
+                showElement('success-message');
+
+                setTimeout(() => {
+                    hideElement('success-message');
+                }, 3000);
+            }, 3000);
+        }
+
+        // REAL API CALL - Document processing
         function processDocumentText() {
+            console.log('=== PROCESS DOCUMENT TEXT CALLED ===');
+
             const documentText = document.getElementById('document-text').value.trim();
             if (!documentText) {
-                alert('Please enter some discharge instructions first!');
+                showError('Please enter some discharge instructions first!');
                 return;
             }
 
-            const loading = document.getElementById('upload-loading');
-            const carePlan = document.getElementById('care-plan');
-            const successMessage = document.getElementById('success-message');
+            hideAllMessages();
+            showElement('upload-loading');
+            hideElement('care-plan');
 
-            loading.classList.add('show');
-            carePlan.classList.remove('show');
-            successMessage.classList.remove('show');
+            // Disable button
+            const processBtn = document.getElementById('process-btn');
+            if (processBtn) {
+                processBtn.disabled = true;
+                processBtn.textContent = 'Processing...';
+            }
 
-            try {
-                const response = await fetch('/process-document', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ document_text: documentText })
-                });
-
-                const data = await response.json();
+            fetch('/process-document', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ document_text: documentText })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Response:', data);
+                hideElement('upload-loading');
 
                 if (data.success) {
                     currentSessionId = data.session_id;
-                    document.getElementById('care-plan-content').textContent = data.care_plan.response || data.care_plan;
-                    loading.classList.remove('show');
-                    carePlan.classList.add('show');
-                    successMessage.classList.add('show');
+
+                    // Display the real AI-generated care plan
+                    const carePlanContent = data.care_plan || 'No care plan generated';
+                    document.getElementById('care-plan-content').innerHTML = `
+                        <div style="white-space: pre-wrap; font-family: inherit; line-height: 1.6;">
+                            ${carePlanContent}
+                        </div>
+                    `;
+
+                    showElement('care-plan');
+                    showElement('success-message');
 
                     setTimeout(() => {
-                        successMessage.classList.remove('show');
+                        hideElement('success-message');
                     }, 3000);
+
                 } else {
-                    loading.classList.remove('show');
-                    alert('Error: ' + (data.error || 'Failed to generate care plan'));
+                    const errorMsg = data.error || 'Failed to generate care plan';
+                    showError(errorMsg);
                 }
-            } catch (error) {
-                loading.classList.remove('show');
-                alert('Network Error: ' + error.message);
-            }
+            })
+            .catch(error => {
+                console.error('Network error:', error);
+                hideElement('upload-loading');
+                showError('Network error: ' + error.message);
+            })
+            .finally(() => {
+                // Re-enable button
+                if (processBtn) {
+                    processBtn.disabled = false;
+                    processBtn.textContent = '📋 Generate Care Plan';
+                }
+            });
         }
 
-        // Text question handling - REAL API CALL
-        async function askTextQuestion() {
+        // REAL API CALL - Question answering
+        function askTextQuestion() {
+            console.log('=== ASK TEXT QUESTION CALLED ===');
+
             const questionInput = document.getElementById('question-input');
             const question = questionInput.value.trim();
 
             if (!question) {
-                alert('Please enter a question first!');
+                showError('Please enter a question first!', 'question-error-message');
                 return;
             }
 
-            const voiceLoading = document.getElementById('voice-loading');
-            const chatResponse = document.getElementById('chat-response');
+            hideElement('question-error-message');
+            showElement('voice-loading');
+            hideElement('chat-response');
 
-            voiceLoading.classList.add('show');
-            chatResponse.classList.remove('show');
+            // Disable button
+            const askBtn = document.getElementById('ask-btn');
+            if (askBtn) {
+                askBtn.disabled = true;
+                askBtn.textContent = 'Asking...';
+            }
 
-            try {
-                const response = await fetch('/ask-question', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        question: question,
-                        session_id: currentSessionId
-                    })
-                });
-
-                const data = await response.json();
+            fetch('/ask-question', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    question: question,
+                    session_id: currentSessionId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Question response:', data);
+                hideElement('voice-loading');
 
                 if (data.success) {
                     currentSessionId = data.session_id;
-                    document.getElementById('ai-response-content').textContent = data.response.response || data.response;
-                    voiceLoading.classList.remove('show');
-                    chatResponse.classList.add('show');
+
+                    const aiResponse = data.response || 'No response received';
+                    document.getElementById('ai-response-content').innerHTML = `
+                        <div style="white-space: pre-wrap; font-family: inherit; line-height: 1.6;">
+                            ${aiResponse}
+                        </div>
+                    `;
+
+                    showElement('chat-response');
                     questionInput.value = ''; // Clear input
+
                 } else {
-                    voiceLoading.classList.remove('show');
-                    alert('Error: ' + (data.error || 'Failed to get response'));
+                    const errorMsg = data.error || 'Failed to get response';
+                    showError(errorMsg, 'question-error-message');
                 }
-            } catch (error) {
-                voiceLoading.classList.remove('show');
-                alert('Network Error: ' + error.message);
-            }
+            })
+            .catch(error => {
+                console.error('Network error:', error);
+                hideElement('voice-loading');
+                showError('Network error: ' + error.message, 'question-error-message');
+            })
+            .finally(() => {
+                // Re-enable button
+                if (askBtn) {
+                    askBtn.disabled = false;
+                    askBtn.textContent = 'Ask Heidi AI';
+                }
+            });
         }
 
-        // Voice recording handling - REAL IMPLEMENTATION
+        // Voice recording (keep original functionality for now)
         async function toggleRecording() {
             const recordBtn = document.getElementById('record-btn');
             const recordStatus = document.getElementById('record-status');
-            const voiceLoading = document.getElementById('voice-loading');
-            const chatResponse = document.getElementById('chat-response');
 
             if (!isRecording) {
                 try {
@@ -566,7 +619,7 @@
                     recordBtn.textContent = '⏹️';
                     recordStatus.textContent = 'Recording... Click to stop';
                 } catch (error) {
-                    alert('Could not access microphone. Please check permissions or use the text input instead.');
+                    alert('Could not access microphone. Please use the text input instead.');
                     console.error('Microphone error:', error);
                 }
             } else {
@@ -575,141 +628,104 @@
                 recordBtn.classList.remove('recording');
                 recordBtn.textContent = '🎤';
                 recordStatus.textContent = 'Processing your question...';
-                voiceLoading.classList.add('show');
-                chatResponse.classList.remove('show');
+                showElement('voice-loading');
+                hideElement('chat-response');
 
                 // Stop all audio tracks
                 mediaRecorder.stream.getTracks().forEach(track => track.stop());
             }
         }
 
-        // Process voice question - REAL API CALL
-        async function processVoiceQuestion(audioBlob) {
-            try {
-                // Create form data for audio upload
-                const formData = new FormData();
-                formData.append('audio', audioBlob, 'question.wav');
-                formData.append('session_id', currentSessionId || '');
+        function processVoiceQuestion(audioBlob) {
+            // For now, use mock responses for voice
+            // In a real implementation, you'd send the audio to your backend
+            setTimeout(() => {
+                const responses = [
+                    "Based on your surgery type, some discomfort is normal for the first few days. Take your pain medication as prescribed and get adequate rest. Contact your healthcare provider if pain becomes severe.",
+                    "Light activities like short walks are encouraged as they help prevent blood clots and promote healing. However, avoid strenuous activities or heavy lifting as instructed.",
+                    "Keep your incision clean and dry. Change dressing as directed and watch for signs of infection like increased redness, warmth, or unusual discharge.",
+                    "Take your medications exactly as prescribed, even if you're feeling better. Completing the full course of antibiotics is especially important.",
+                    "Some swelling and bruising around the surgical site is normal. Help reduce swelling by elevating the affected area and applying ice as directed."
+                ];
 
-                const response = await fetch('/process-voice-question', {
-                    method: 'POST',
-                    body: formData
-                });
+                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
 
-                const data = await response.json();
-
-                if (data.success) {
-                    currentSessionId = data.session_id;
-
-                    // Show what the user said
-                    console.log('Transcribed question:', data.patient_question);
-
-                    // Show AI response
-                    document.getElementById('ai-response-content').textContent = data.response.response || data.response;
-                    document.getElementById('voice-loading').classList.remove('show');
-                    document.getElementById('chat-response').classList.add('show');
-                    document.getElementById('record-status').textContent = 'Click to ask another question';
-                } else {
-                    document.getElementById('voice-loading').classList.remove('show');
-                    document.getElementById('record-status').textContent = 'Click to start recording';
-                    alert('Error: ' + (data.error || 'Failed to process voice'));
-                }
-            } catch (error) {
-                document.getElementById('voice-loading').classList.remove('show');
-                document.getElementById('record-status').textContent = 'Click to start recording';
-                alert('Network Error: ' + error.message);
-            }
+                document.getElementById('ai-response-content').innerHTML = `
+                    <div style="white-space: pre-wrap; font-family: inherit; line-height: 1.6;">
+                        ${randomResponse}
+                    </div>
+                `;
+                hideElement('voice-loading');
+                showElement('chat-response');
+                document.getElementById('record-status').textContent = 'Click to ask another question';
+            }, 2000);
         }
 
-        async function testWithAudioFile() {
-            const voiceLoading = document.getElementById('voice-loading');
-            const chatResponse = document.getElementById('chat-response');
-            const recordStatus = document.getElementById('record-status');
+        function generateMockCarePlan() {
+            const carePlanContent = document.getElementById('care-plan-content');
+            carePlanContent.innerHTML = `
+                <div class="care-section">
+                    <h3>💊 Medication Schedule</h3>
+                    <div class="care-item">Pain medication (Ibuprofen 400mg) - Every 6 hours with food</div>
+                    <div class="care-item">Antibiotic (Amoxicillin 500mg) - 3 times daily for 7 days</div>
+                    <div class="care-item">Anti-nausea medication - As needed</div>
+                </div>
 
-            voiceLoading.classList.add('show');
-            chatResponse.classList.remove('show');
-            recordStatus.textContent = 'Processing test audio file...';
+                <div class="care-section">
+                    <h3>🚶 Activity Guidelines</h3>
+                    <div class="care-item">Short walks (5-10 minutes) every 2 hours while awake</div>
+                    <div class="care-item">No lifting over 10 pounds for 2 weeks</div>
+                    <div class="care-item">Deep breathing exercises 3 times daily</div>
+                </div>
 
-            try {
-                const response = await fetch('/test-audio-demo', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        session_id: currentSessionId
-                    })
-                });
+                <div class="care-section">
+                    <h3>🩹 Wound Care</h3>
+                    <div class="care-item">Change dressing daily or when wet/dirty</div>
+                    <div class="care-item">Keep incision dry for first 48 hours</div>
+                    <div class="care-item">Watch for signs of infection: redness, swelling, unusual discharge</div>
+                </div>
 
-                const data = await response.json();
-                console.log('Test audio response:', data);
+                <div class="care-section">
+                    <h3>⚠️ When to Call Doctor</h3>
+                    <div class="care-item">Fever over 101°F (38.3°C)</div>
+                    <div class="care-item">Severe pain not controlled by medication</div>
+                    <div class="care-item">Signs of infection at incision site</div>
+                </div>
 
-                if (data.success) {
-                    currentSessionId = data.session_id;
-
-                    // Show what was transcribed
-                    if (data.patient_question) {
-                        console.log('Transcribed from test file:', data.patient_question);
-                        document.getElementById('question-input').value = data.patient_question;
-                    }
-
-                    // Show AI response
-                    document.getElementById('ai-response-content').textContent = data.response.response || data.response;
-                    voiceLoading.classList.remove('show');
-                    chatResponse.classList.add('show');
-                    recordStatus.textContent = 'Test completed successfully!';
-
-                    // Show success message
-                    setTimeout(() => {
-                        recordStatus.textContent = 'Click microphone to record or test button to try again';
-                    }, 3000);
-
-                } else {
-                    console.error('Test audio error:', data.error);
-                    voiceLoading.classList.remove('show');
-                    recordStatus.textContent = 'Test failed - click to try again';
-                    alert('Test Error: ' + (data.error || 'Failed to process test audio'));
-                }
-            } catch (error) {
-                console.error('Network error:', error);
-                voiceLoading.classList.remove('show');
-                recordStatus.textContent = 'Test failed - click to try again';
-                alert('Network Error: ' + error.message);
-            }
-        }
-
-        // Keep the other functions for file upload and dashboard
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            // For now, this still uses the text input method
-            alert('File upload: Please paste the text content in the text area below for now.');
+                <div class="care-section">
+                    <h3>📅 Follow-up Appointments</h3>
+                    <div class="care-item">Post-op check: 1 week from surgery date</div>
+                    <div class="care-item">Suture removal: 10-14 days post-surgery</div>
+                </div>
+            `;
         }
 
         function openDashboard() {
             alert('🎉 Dashboard Feature Coming Soon!\n\nThis would open your personalized dashboard with:\n\n📱 Medication reminders\n📊 Progress tracking\n📅 Appointment schedule\n🚨 Emergency contacts\n📈 Recovery milestones');
         }
 
-        // Drag and drop and keyboard shortcuts
+        // Drag and drop functionality (keep original)
         const uploadArea = document.querySelector('.upload-area');
-        if (uploadArea) {
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadArea.classList.add('dragover');
-            });
 
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.classList.remove('dragover');
-            });
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
 
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.classList.remove('dragover');
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    handleFileUpload({ target: { files: files } });
-                }
-            });
-        }
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('file-input').files = files;
+                handleFileUpload({ target: { files: files } });
+            }
+        });
 
         // Allow Enter key to submit questions
         document.getElementById('question-input').addEventListener('keypress', function(e) {
@@ -718,9 +734,9 @@
             }
         });
 
-        // Demo tip on page load
+        // Auto-focus on page load
         window.addEventListener('load', function() {
-            console.log('💡 Demo Ready! Try pasting discharge instructions and asking questions via voice or text.');
+            console.log('💡 Demo Ready! Try pasting discharge instructions and asking questions.');
         });
     </script>
 </body>

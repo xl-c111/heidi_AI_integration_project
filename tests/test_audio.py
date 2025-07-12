@@ -37,7 +37,7 @@ def main():
     print(f"✅ Transcription started. Recording ID: {recording_id}")
 
     # Step 4: Upload audio file
-    file_path = os.path.join("static", "Going Down Stairs.mp3")
+    file_path = os.path.join("static", "Going_Down_Stairs.mp3")
     if not os.path.exists(file_path):
         print(f"❌ Audio file not found: {file_path}")
         return
