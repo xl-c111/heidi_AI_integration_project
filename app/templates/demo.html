@@ -132,26 +132,81 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* Enhanced care section styling */
         .care-section {
             margin-bottom: 25px;
-            padding: 15px;
-            background: #f8fafc;
-            border-radius: 8px;
-            border-left: 4px solid #4facfe;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+            border-radius: 12px;
+            border-left: 5px solid #4facfe;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .care-section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .care-section.medication {
+            border-left-color: #8b5cf6;
+            background: linear-gradient(135deg, #faf5ff 0%, #ffffff 100%);
+        }
+
+        .care-section.activity {
+            border-left-color: #06b6d4;
+            background: linear-gradient(135deg, #f0fdff 0%, #ffffff 100%);
+        }
+
+        .care-section.wound-care {
+            border-left-color: #10b981;
+            background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+        }
+
+        .care-section.warning {
+            border-left-color: #f59e0b;
+            background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
+        }
+
+        .care-section.followup {
+            border-left-color: #ef4444;
+            background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
         }
 
         .care-section h3 {
             color: #1e293b;
-            margin-bottom: 10px;
-            font-size: 1.1rem;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .care-section h3 .icon {
+            font-size: 1.5rem;
         }
 
         .care-item {
-            background: white;
-            padding: 10px;
-            margin: 8px 0;
-            border-radius: 6px;
-            border-left: 2px solid #e2e8f0;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 12px 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 3px solid #e2e8f0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+        }
+
+        .care-item:hover {
+            background: rgba(255, 255, 255, 1);
+            border-left-color: #4facfe;
+            transform: translateX(4px);
+        }
+
+        .care-item strong {
+            color: #1e293b;
+            font-weight: 600;
         }
 
         .btn {
@@ -208,50 +263,6 @@
             border-left-color: #10b981;
         }
 
-        .record-btn {
-            background: #10b981;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-            margin: 10px auto;
-            display: block;
-            transition: all 0.3s ease;
-        }
-
-        .record-btn:hover {
-            background: #059669;
-            transform: scale(1.1);
-        }
-
-        .record-btn.recording {
-            background: #ef4444;
-            animation: pulse 1s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-
-        .chat-response {
-            background: #ecfdf5;
-            border: 1px solid #10b981;
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 15px;
-            display: none;
-        }
-
-        .chat-response.show {
-            display: block;
-            animation: fadeIn 0.5s ease-in;
-        }
-
         .text-question-area {
             margin-top: 15px;
             padding: 15px;
@@ -286,6 +297,20 @@
         .ask-btn:disabled {
             background: #94a3b8;
             cursor: not-allowed;
+        }
+
+        .chat-response {
+            background: #ecfdf5;
+            border: 1px solid #10b981;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .chat-response.show {
+            display: block;
+            animation: fadeIn 0.5s ease-in;
         }
 
         .error-message {
@@ -365,14 +390,10 @@
             <!-- Step 2: Voice Chat -->
             <div class="step voice-section">
                 <h2>💬 Step 2: Ask Questions About Your Recovery</h2>
-                <p style="margin-bottom: 15px;">Click the microphone to ask questions about your condition, medications, or recovery process.</p>
-
-                <button class="record-btn" id="record-btn" onclick="toggleRecording()">🎤</button>
-                <p style="text-align: center; color: #64748b; margin-bottom: 15px;" id="record-status">Click to start recording</p>
 
                 <!-- Text question area -->
                 <div class="text-question-area">
-                    <h4 style="margin-bottom: 10px;">Or type your question:</h4>
+                    <h4 style="margin-bottom: 10px;">Type your question:</h4>
                     <input type="text" id="question-input" placeholder="Ask about pain levels, activity restrictions, medication side effects, etc.">
                     <button class="ask-btn" onclick="askTextQuestion()" id="ask-btn">Ask Heidi AI</button>
                 </div>
@@ -403,9 +424,6 @@
 
     <script>
         // Global variables
-        let isRecording = false;
-        let mediaRecorder = null;
-        let audioChunks = [];
         let currentSessionId = null;
 
         // Utility functions
@@ -434,7 +452,164 @@
             hideElement('success-message');
         }
 
-        // File upload handling (keep original design, but add API call option)
+        // Enhanced function to parse AI response and format into care sections
+        function formatCarePlan(aiResponse) {
+            console.log('Formatting AI response:', aiResponse);
+
+            // Clean up the response - remove markdown formatting
+            let cleanResponse = aiResponse
+                .replace(/\*\*/g, '') // Remove bold markdown
+                .replace(/###\s*/g, '') // Remove h3 markdown
+                .replace(/\*\s+/g, '• '); // Convert * bullets to •
+
+            // Define section mappings with enhanced keywords
+            const sectionMappings = [
+                {
+                    keywords: ['medication', 'medicine', 'drug', 'pain', 'tramadol', 'ibuprofen', 'prescription', '1.'],
+                    icon: '💊',
+                    title: 'Medication Schedule',
+                    className: 'medication'
+                },
+                {
+                    keywords: ['activity', 'exercise', 'lifting', 'movement', 'walk', 'rest', '2.'],
+                    icon: '🚶',
+                    title: 'Activity Guidelines',
+                    className: 'activity'
+                },
+                {
+                    keywords: ['wound', 'incision', 'shower', 'bandage', 'dressing', 'steri-strip', '3.'],
+                    icon: '🩹',
+                    title: 'Wound Care',
+                    className: 'wound-care'
+                },
+                {
+                    keywords: ['warning', 'contact', 'call', 'fever', 'emergency', 'immediately', '4.'],
+                    icon: '⚠️',
+                    title: 'Warning Signs',
+                    className: 'warning'
+                },
+                {
+                    keywords: ['follow', 'appointment', 'visit', 'return', 'post-op', '5.'],
+                    icon: '📅',
+                    title: 'Follow-up Care',
+                    className: 'followup'
+                }
+            ];
+
+            // Split into sections using numbered headers (1., 2., 3., etc.)
+            const sections = cleanResponse.split(/(?=\d+\.\s)/).filter(section => section.trim());
+            let formattedHTML = '';
+
+            for (let section of sections) {
+                const lines = section.split('\n').filter(line => line.trim());
+                if (lines.length === 0) continue;
+
+                // Find the best matching section type
+                let matchedSection = null;
+                const sectionText = section.toLowerCase();
+
+                for (let mapping of sectionMappings) {
+                    if (mapping.keywords.some(keyword => sectionText.includes(keyword.toLowerCase()))) {
+                        matchedSection = mapping;
+                        break;
+                    }
+                }
+
+                // If no match found, try to guess from the first line
+                if (!matchedSection) {
+                    const firstLine = lines[0].toLowerCase();
+                    if (firstLine.includes('medication') || firstLine.includes('pain')) {
+                        matchedSection = sectionMappings[0]; // Medication
+                    } else if (firstLine.includes('activity') || firstLine.includes('lifting')) {
+                        matchedSection = sectionMappings[1]; // Activity
+                    } else if (firstLine.includes('wound') || firstLine.includes('shower')) {
+                        matchedSection = sectionMappings[2]; // Wound Care
+                    } else if (firstLine.includes('warning') || firstLine.includes('contact')) {
+                        matchedSection = sectionMappings[3]; // Warning
+                    } else if (firstLine.includes('follow') || firstLine.includes('visit')) {
+                        matchedSection = sectionMappings[4]; // Follow-up
+                    }
+                }
+
+                // Default section if still no match
+                if (!matchedSection) {
+                    matchedSection = {
+                        icon: '📋',
+                        title: 'Care Instructions',
+                        className: 'medication'
+                    };
+                }
+
+                // Extract items from this section
+                const items = [];
+                let startCollecting = false;
+
+                for (let line of lines) {
+                    const trimmedLine = line.trim();
+
+                    // Skip the header line
+                    if (trimmedLine.match(/^\d+\.\s/)) {
+                        startCollecting = true;
+                        continue;
+                    }
+
+                    if (startCollecting && trimmedLine) {
+                        // Handle bullet points and sub-items
+                        if (trimmedLine.startsWith('•') || trimmedLine.startsWith('*')) {
+                            items.push(trimmedLine.replace(/^[•*]\s*/, '').trim());
+                        } else if (trimmedLine.includes(':')) {
+                            // Handle items with colons (like "Tramadol 50mg: Take every 6 hours")
+                            items.push(trimmedLine);
+                        } else if (trimmedLine.length > 10 && !trimmedLine.includes('Contact your surgeon')) {
+                            // Add other meaningful lines
+                            items.push(trimmedLine);
+                        } else if (trimmedLine.includes('Contact your surgeon')) {
+                            // Add contact instructions as-is
+                            items.push(trimmedLine);
+                        }
+                    }
+                }
+
+                // Create the formatted section
+                if (items.length > 0) {
+                    formattedHTML += createCareSection(matchedSection, items);
+                }
+            }
+
+            // If we couldn't parse into sections, show a nicely formatted version
+            if (!formattedHTML.trim()) {
+                formattedHTML = `
+                    <div class="care-section">
+                        <h3><span class="icon">📋</span> Your Care Plan</h3>
+                        <div class="care-item" style="white-space: pre-wrap; line-height: 1.8; font-size: 0.95rem;">
+                            ${cleanResponse}
+                        </div>
+                    </div>
+                `;
+            }
+
+            return formattedHTML;
+        }
+
+        function createCareSection(sectionInfo, items) {
+            const itemsHTML = items.map(item => `
+                <div class="care-item">
+                    ${item}
+                </div>
+            `).join('');
+
+            return `
+                <div class="care-section ${sectionInfo.className}">
+                    <h3>
+                        <span class="icon">${sectionInfo.icon}</span>
+                        ${sectionInfo.title}
+                    </h3>
+                    ${itemsHTML}
+                </div>
+            `;
+        }
+
+        // File upload handling (mock for now)
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -443,8 +618,7 @@
             showElement('upload-loading');
             hideElement('care-plan');
 
-            // For now, we'll use mock data for file upload
-            // In a real implementation, you'd extract text from the file first
+            // Mock processing - in real implementation, extract text from file first
             setTimeout(() => {
                 generateMockCarePlan();
                 hideElement('upload-loading');
@@ -457,7 +631,7 @@
             }, 3000);
         }
 
-        // REAL API CALL - Document processing
+        // REAL API CALL - Document processing with formatting
         function processDocumentText() {
             console.log('=== PROCESS DOCUMENT TEXT CALLED ===');
 
@@ -491,13 +665,11 @@
                 if (data.success) {
                     currentSessionId = data.session_id;
 
-                    // Display the real AI-generated care plan
+                    // Format the AI response into beautiful care sections
                     const carePlanContent = data.care_plan || 'No care plan generated';
-                    document.getElementById('care-plan-content').innerHTML = `
-                        <div style="white-space: pre-wrap; font-family: inherit; line-height: 1.6;">
-                            ${carePlanContent}
-                        </div>
-                    `;
+                    const formattedCarePlan = formatCarePlan(carePlanContent);
+
+                    document.getElementById('care-plan-content').innerHTML = formattedCarePlan;
 
                     showElement('care-plan');
                     showElement('success-message');
@@ -566,7 +738,7 @@
 
                     const aiResponse = data.response || 'No response received';
                     document.getElementById('ai-response-content').innerHTML = `
-                        <div style="white-space: pre-wrap; font-family: inherit; line-height: 1.6;">
+                        <div style="white-space: pre-wrap; font-family: inherit; line-height: 1.6; background: rgba(255,255,255,0.5); padding: 15px; border-radius: 8px;">
                             ${aiResponse}
                         </div>
                     `;
@@ -593,139 +765,49 @@
             });
         }
 
-        // Voice recording (keep original functionality for now)
-        async function toggleRecording() {
-            const recordBtn = document.getElementById('record-btn');
-            const recordStatus = document.getElementById('record-status');
-
-            if (!isRecording) {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
-                    audioChunks = [];
-
-                    mediaRecorder.ondataavailable = (event) => {
-                        audioChunks.push(event.data);
-                    };
-
-                    mediaRecorder.onstop = () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                        processVoiceQuestion(audioBlob);
-                    };
-
-                    mediaRecorder.start();
-                    isRecording = true;
-                    recordBtn.classList.add('recording');
-                    recordBtn.textContent = '⏹️';
-                    recordStatus.textContent = 'Recording... Click to stop';
-                } catch (error) {
-                    alert('Could not access microphone. Please use the text input instead.');
-                    console.error('Microphone error:', error);
-                }
-            } else {
-                mediaRecorder.stop();
-                isRecording = false;
-                recordBtn.classList.remove('recording');
-                recordBtn.textContent = '🎤';
-                recordStatus.textContent = 'Processing your question...';
-                showElement('voice-loading');
-                hideElement('chat-response');
-
-                // Stop all audio tracks
-                mediaRecorder.stream.getTracks().forEach(track => track.stop());
-            }
-        }
-
-        function processVoiceQuestion(audioBlob) {
-            // For now, use mock responses for voice
-            // In a real implementation, you'd send the audio to your backend
-            setTimeout(() => {
-                const responses = [
-                    "Based on your surgery type, some discomfort is normal for the first few days. Take your pain medication as prescribed and get adequate rest. Contact your healthcare provider if pain becomes severe.",
-                    "Light activities like short walks are encouraged as they help prevent blood clots and promote healing. However, avoid strenuous activities or heavy lifting as instructed.",
-                    "Keep your incision clean and dry. Change dressing as directed and watch for signs of infection like increased redness, warmth, or unusual discharge.",
-                    "Take your medications exactly as prescribed, even if you're feeling better. Completing the full course of antibiotics is especially important.",
-                    "Some swelling and bruising around the surgical site is normal. Help reduce swelling by elevating the affected area and applying ice as directed."
-                ];
-
-                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-
-                document.getElementById('ai-response-content').innerHTML = `
-                    <div style="white-space: pre-wrap; font-family: inherit; line-height: 1.6;">
-                        ${randomResponse}
-                    </div>
-                `;
-                hideElement('voice-loading');
-                showElement('chat-response');
-                document.getElementById('record-status').textContent = 'Click to ask another question';
-            }, 2000);
-        }
-
         function generateMockCarePlan() {
-            const carePlanContent = document.getElementById('care-plan-content');
-            carePlanContent.innerHTML = `
-                <div class="care-section">
-                    <h3>💊 Medication Schedule</h3>
-                    <div class="care-item">Pain medication (Ibuprofen 400mg) - Every 6 hours with food</div>
-                    <div class="care-item">Antibiotic (Amoxicillin 500mg) - 3 times daily for 7 days</div>
-                    <div class="care-item">Anti-nausea medication - As needed</div>
+            const mockCarePlan = `
+                <div class="care-section medication">
+                    <h3><span class="icon">💊</span> Medication Schedule</h3>
+                    <div class="care-item"><strong>Pain medication (Ibuprofen 400mg):</strong> Every 6 hours with food</div>
+                    <div class="care-item"><strong>Antibiotic (Amoxicillin 500mg):</strong> 3 times daily for 7 days</div>
+                    <div class="care-item"><strong>Anti-nausea medication:</strong> As needed</div>
                 </div>
 
-                <div class="care-section">
-                    <h3>🚶 Activity Guidelines</h3>
+                <div class="care-section activity">
+                    <h3><span class="icon">🚶</span> Activity Guidelines</h3>
                     <div class="care-item">Short walks (5-10 minutes) every 2 hours while awake</div>
                     <div class="care-item">No lifting over 10 pounds for 2 weeks</div>
                     <div class="care-item">Deep breathing exercises 3 times daily</div>
                 </div>
 
-                <div class="care-section">
-                    <h3>🩹 Wound Care</h3>
+                <div class="care-section wound-care">
+                    <h3><span class="icon">🩹</span> Wound Care</h3>
                     <div class="care-item">Change dressing daily or when wet/dirty</div>
                     <div class="care-item">Keep incision dry for first 48 hours</div>
                     <div class="care-item">Watch for signs of infection: redness, swelling, unusual discharge</div>
                 </div>
 
-                <div class="care-section">
-                    <h3>⚠️ When to Call Doctor</h3>
+                <div class="care-section warning">
+                    <h3><span class="icon">⚠️</span> Warning Signs</h3>
                     <div class="care-item">Fever over 101°F (38.3°C)</div>
                     <div class="care-item">Severe pain not controlled by medication</div>
                     <div class="care-item">Signs of infection at incision site</div>
                 </div>
 
-                <div class="care-section">
-                    <h3>📅 Follow-up Appointments</h3>
+                <div class="care-section followup">
+                    <h3><span class="icon">📅</span> Follow-up Care</h3>
                     <div class="care-item">Post-op check: 1 week from surgery date</div>
                     <div class="care-item">Suture removal: 10-14 days post-surgery</div>
                 </div>
             `;
+
+            document.getElementById('care-plan-content').innerHTML = mockCarePlan;
         }
 
         function openDashboard() {
             alert('🎉 Dashboard Feature Coming Soon!\n\nThis would open your personalized dashboard with:\n\n📱 Medication reminders\n📊 Progress tracking\n📅 Appointment schedule\n🚨 Emergency contacts\n📈 Recovery milestones');
         }
-
-        // Drag and drop functionality (keep original)
-        const uploadArea = document.querySelector('.upload-area');
-
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
-        });
-
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
-
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                document.getElementById('file-input').files = files;
-                handleFileUpload({ target: { files: files } });
-            }
-        });
 
         // Allow Enter key to submit questions
         document.getElementById('question-input').addEventListener('keypress', function(e) {
