@@ -23,7 +23,7 @@ def details(session_id):
     jwt_token = get_jwt_token()
     if not jwt_token:
         return jsonify({"error": "JWT token not found"}), 401
-
+   
     session_details = get_session_details( jwt_token,session_id)
     if isinstance(session_details, dict) and session_details.get("error"):
         return jsonify(session_details), session_details.get("status_code", 500)
