@@ -66,13 +66,16 @@ def full_transcription_demo():
     if not recording_id:
         return jsonify({"error": True, "message": "Failed to start transcription"})
 
-    # Step 3: Upload audio
-    audio_file_path = "/static/test_audio.mp3"
-    if not os.path.exists(audio_file_path):
-        return jsonify({"error": True, "message": "Audio file missing on server"})
+    # Step 3: Handle uploaded audio
+    uploaded_file = request.files.get('audio')
+    if not uploaded_file or not uploaded_file.filename.endswith('.mp3'):
+        return jsonify({"error": True, "message": "No valid MP3 file provided"})
 
-    upload_result = upload_audio(
-        jwt, session_id, recording_id, audio_file_path)
+    # Save to a temp location
+    temp_path = os.path.join('/tmp', uploaded_file.filename)
+    uploaded_file.save(temp_path)
+
+    upload_result = upload_audio(jwt, session_id, recording_id, temp_path)
     if not upload_result.get("is_success"):
         return jsonify({"error": True, "message": "Audio upload failed", "details": upload_result})
 
@@ -91,4 +94,5 @@ def full_transcription_demo():
     # Step 6: Generate consult note
     note = generate_consult_note(
         jwt, session_id, template_id, voice_style="BRIEF", brain="LEFT")
+    print(note)
     return jsonify({"note": note})

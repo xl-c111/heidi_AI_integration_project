@@ -52,7 +52,12 @@ def generate_consult_note(jwt_token, session_id, template_id, voice_style="GOLDI
     try:
         response = requests.post(url, headers=headers, json=payload)
         if response.status_code == 200:
-            return response.json()
+            # Read and decode streamed response
+            chunks = []
+            for chunk in response.iter_lines():
+                if chunk:
+                    chunks.append(chunk.decode("utf-8"))
+            return {"success": True, "note": "".join(chunks)}
         else:
             return {
                 "error": True,
