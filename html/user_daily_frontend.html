@@ -873,18 +873,18 @@
 
             <!-- Progress Overview -->
             <div class="card">
-                <h2>📋 Step 1: Upload Your Medical Documents</h2>
+                <h2>📋 Step 1: Upload Your Medical Photos</h2>
                 <div class="upload-area" onclick="document.getElementById('file-input').click()">
                     <div class="upload-text">📄 Click to upload or drag & drop</div>
-                    <div class="upload-subtext">Discharge papers, prescription lists, care instructions (JPG, PNG, PDF)</div>
+                    <div class="upload-subtext">Upload Photo Here(JPG, PNG, PDF)</div>
                 </div>
                 <input type="file" id="file-input" class="file-input" accept=".jpg,.jpeg,.png,.pdf" onchange="handleFileUpload(event)">
 
                 <!-- Alternative: Manual text input for demo -->
                 <div class="text-input-area">
-                    <h4 style="margin-bottom: 10px;">Or paste your discharge instructions here:</h4>
-                    <textarea id="document-text" placeholder="Example: Patient discharged after knee surgery. Take Ibuprofen 400mg every 6 hours with food. Short walks recommended every 2 hours. No lifting over 10 pounds for 2 weeks. Follow-up appointment in 1 week. Watch for fever, redness, or unusual swelling..."></textarea>
-                    <button class="process-btn" onclick="processDocumentText()">📋 Generate Care Plan</button>
+                    <h4 style="margin-bottom: 10px;">Ask your questions here</h4>
+                    <textarea id="document-text" placeholder="Example: How often do I need to take Ibuprofen today? My leg is numb, what do you recommend doing?"></textarea>
+                    <button class="process-btn" onclick="processDocumentText()">📋 Submit Question</button>
                 </div>
 
                 <div class="loading" id="upload-loading">
