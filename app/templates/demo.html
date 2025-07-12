@@ -609,27 +609,61 @@
             `;
         }
 
-        // File upload handling (mock for now)
         function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+    const file = event.target.files[0];
+    if (!file) return;
 
-            hideAllMessages();
-            showElement('upload-loading');
-            hideElement('care-plan');
+    hideAllMessages();
+    showElement('upload-loading');
+    hideElement('care-plan');
 
-            // Mock processing - in real implementation, extract text from file first
-            setTimeout(() => {
-                generateMockCarePlan();
-                hideElement('upload-loading');
-                showElement('care-plan');
-                showElement('success-message');
+    const processBtn = document.getElementById('process-btn');
+    if (processBtn) {
+        processBtn.disabled = true;
+        processBtn.textContent = 'Uploading...';
+    }
 
-                setTimeout(() => {
-                    hideElement('success-message');
-                }, 3000);
-            }, 3000);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    fetch('/upload-document', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideElement('upload-loading');
+
+        if (data.error) {
+            showError(data.error);
+            return;
         }
+
+        // Populate textarea with extracted text from PDF/image
+        if (data.text) {
+            const textarea = document.getElementById('document-text');
+            textarea.value = data.text;
+
+            showElement('success-message');
+            setTimeout(() => {
+                hideElement('success-message');
+            }, 3000);
+        } else {
+            showError('Failed to extract text from the uploaded document.');
+        }
+    })
+    .catch(error => {
+        hideElement('upload-loading');
+        showError('Upload failed: ' + error.message);
+    })
+    .finally(() => {
+        if (processBtn) {
+            processBtn.disabled = false;
+            processBtn.textContent = '📋 Generate Care Plan';
+        }
+    });
+}
+
 
         // REAL API CALL - Document processing with formatting
         function processDocumentText() {
