@@ -1,63 +1,118 @@
-# app/routes/demo.py - Single route that does everything for the demo
-from flask import Blueprint, request, jsonify, render_template_string
-from werkzeug.utils import secure_filename
+from flask import Blueprint, request, jsonify, render_template
 import os
-import base64
 from app.api.auth import get_jwt_token
 from app.api.ask_heidi import ask_ai_stream
 from app.api.session import create_session
 
 demo_bp = Blueprint('demo', __name__)
 
-# Simple HTML template for the demo
-DEMO_TEMPLATE = open('demo.html', 'r').read()  # Your HTML from above
-
-@demo_bp.route('/')
+@demo_bp.route('/demo')
 def demo_home():
-    return DEMO_TEMPLATE
+    """Serve the demo HTML"""
+    try:
+        return render_template('demo.html')
+    except:
+        # Fallback if template not found
+        return """
+        <h1>Demo Route Works!</h1>
+        <p>Place your HTML in templates/demo.html</p>
+        <p>Or test the API directly:</p>
+        <ul>
+            <li><a href="/test-jwt">Test JWT</a></li>
+            <li><a href="/test-session">Test Session</a></li>
+        </ul>
+        """
+
+@demo_bp.route('/test-jwt')
+def test_jwt():
+    """Quick JWT test endpoint"""
+    jwt_token = get_jwt_token()
+    return jsonify({
+        'jwt_token': jwt_token,
+        'has_error': 'Error' in str(jwt_token),
+        'env_check': {
+            'api_key_set': bool(os.getenv("HEIDI_API_KEY")),
+            'email_set': bool(os.getenv("HEIDI_EMAIL")),
+            'user_id_set': bool(os.getenv("HEIDI_USER_ID"))
+        }
+    })
+
+@demo_bp.route('/test-session')
+def test_session():
+    """Quick session test endpoint"""
+    jwt_token = get_jwt_token()
+    if 'Error' in str(jwt_token):
+        return jsonify({'error': 'JWT failed', 'details': jwt_token})
+
+    session_id = create_session(jwt_token)
+    return jsonify({
+        'jwt_token': jwt_token[:20] + '...' if isinstance(jwt_token, str) else jwt_token,
+        'session_result': session_id
+    })
 
 @demo_bp.route('/process-document', methods=['POST'])
 def process_document():
-    """Super simple route - take text input and generate care plan"""
+    """Process document and generate care plan"""
+    print("=== PROCESS DOCUMENT CALLED ===")
 
-    # For hackathon speed, just take manual text input instead of OCR
-    document_text = request.form.get('document_text') or request.json.get('document_text', '')
+    # Get document text from request
+    if request.is_json:
+        document_text = request.json.get('document_text', '')
+    else:
+        document_text = request.form.get('document_text', '')
+
+    print(f"Document text received: {document_text[:100]}...")
 
     if not document_text:
         return jsonify({'error': 'No document text provided'}), 400
 
     try:
-        # Get JWT and create session
+        # Step 1: Get JWT
+        print("Getting JWT token...")
         jwt_token = get_jwt_token()
-        if not jwt_token or 'Error' in str(jwt_token):
-            return jsonify({'error': 'Authentication failed'}), 401
+        print(f"JWT result: {str(jwt_token)[:50]}...")
 
+        if not jwt_token or 'Error' in str(jwt_token):
+            return jsonify({'error': 'Authentication failed', 'details': str(jwt_token)}), 401
+
+        # Step 2: Create session
+        print("Creating session...")
         session_id = create_session(jwt_token)
+        print(f"Session result: {session_id}")
+
         if isinstance(session_id, dict) and session_id.get("error"):
             return jsonify({'error': 'Session creation failed', 'details': session_id}), 500
 
-        # Create care plan prompt
-        care_plan_prompt = """
+        # Step 3: Create care plan prompt
+        care_plan_prompt = f"""
         You are a medical care assistant. Based on the following discharge document, create a structured post-surgery care plan.
 
-        Format your response as a JSON object with these sections:
-        - medications: array of {name, dosage, frequency, instructions}
-        - activities: array of {activity, frequency, restrictions}
-        - wound_care: array of care instructions
-        - warning_signs: array of symptoms to watch for
-        - appointments: array of {type, timing}
+        Please provide a helpful care plan with:
+        1. Medication schedule and instructions
+        2. Activity guidelines and restrictions
+        3. Wound care instructions
+        4. Warning signs to watch for
+        5. Follow-up appointment reminders
 
-        Document content:
-        """ + document_text
+        Make it clear, practical, and reassuring for a patient recovering at home.
 
-        # Get AI response
+        Document content: {document_text}
+        """
+
+        # Step 4: Get AI response
+        print("Calling Ask AI...")
         ai_response = ask_ai_stream(
             jwt_token=jwt_token,
             session_id=session_id,
             ai_command_text=care_plan_prompt,
             content=document_text,
-            content_type="text"
+            content_type="MARKDOWN"
         )
+
+        print(f"AI response: {str(ai_response)[:200]}...")
+
+        if ai_response.get("error"):
+            return jsonify({'error': 'AI request failed', 'details': ai_response}), 500
 
         return jsonify({
             'success': True,
@@ -67,14 +122,20 @@ def process_document():
         })
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"Exception in process_document: {str(e)}")
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
 
 @demo_bp.route('/ask-question', methods=['POST'])
 def ask_question():
     """Simple text-based question answering"""
+    print("=== ASK QUESTION CALLED ===")
 
-    question = request.json.get('question', '')
-    session_id = request.json.get('session_id')
+    data = request.get_json()
+    question = data.get('question', '')
+    session_id = data.get('session_id')
+
+    print(f"Question: {question}")
+    print(f"Session ID: {session_id}")
 
     if not question:
         return jsonify({'error': 'No question provided'}), 400
@@ -84,6 +145,7 @@ def ask_question():
 
         if not session_id:
             session_id = create_session(jwt_token)
+            print(f"Created new session: {session_id}")
 
         medical_prompt = f"""
         You are a helpful post-surgery care assistant. Answer this patient question with:
@@ -110,4 +172,5 @@ def ask_question():
         })
 
     except Exception as e:
+        print(f"Exception in ask_question: {str(e)}")
         return jsonify({'error': str(e)}), 500
