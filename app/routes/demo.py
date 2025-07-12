@@ -1,3 +1,4 @@
+# app/routes/demo.py - With Debug and Fixed Paths
 from flask import Blueprint, request, jsonify, render_template
 import os
 from app.api.auth import get_jwt_token
@@ -11,12 +12,12 @@ def demo_home():
     """Serve the demo HTML"""
     try:
         return render_template('demo.html')
-    except:
-        # Fallback if template not found
-        return """
-        <h1>Demo Route Works!</h1>
-        <p>Place your HTML in templates/demo.html</p>
-        <p>Or test the API directly:</p>
+    except Exception as e:
+        return f"""
+        <h1>Template Error: {str(e)}</h1>
+        <p>Make sure you have templates/demo.html file</p>
+        <p>Current working directory: {os.getcwd()}</p>
+        <p>Try these working endpoints:</p>
         <ul>
             <li><a href="/test-jwt">Test JWT</a></li>
             <li><a href="/test-session">Test Session</a></li>
@@ -56,7 +57,7 @@ def process_document():
     print("=== PROCESS DOCUMENT CALLED ===")
 
     # Get document text from request
-    if request.is_json:
+    if request.is_json and request.json is not None:
         document_text = request.json.get('document_text', '')
     else:
         document_text = request.form.get('document_text', '')
@@ -106,7 +107,7 @@ def process_document():
             session_id=session_id,
             ai_command_text=care_plan_prompt,
             content=document_text,
-            content_type="MARKDOWN"
+            content_type="text"
         )
 
         print(f"AI response: {str(ai_response)[:200]}...")
@@ -162,7 +163,7 @@ def ask_question():
             session_id=session_id,
             ai_command_text=medical_prompt,
             content=question,
-            content_type="text"
+            content_type="MARKDOWN"  # Fixed!
         )
 
         return jsonify({
