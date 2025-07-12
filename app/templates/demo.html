@@ -359,6 +359,16 @@
                 <button class="record-btn" id="record-btn" onclick="toggleRecording()">🎤</button>
                 <p style="text-align: center; color: #64748b; margin-bottom: 15px;" id="record-status">Click to start recording</p>
 
+                <!-- Add this in the Step 2 voice section, after the microphone button -->
+                <div style="text-align: center; margin: 15px 0;">
+                    <button class="btn" onclick="testWithAudioFile()" style="background: #f59e0b;">
+                        🎵 Test with Audio File
+                    </button>
+                    <p style="font-size: 0.9rem; color: #6b7280; margin-top: 5px;">
+                        Use pre-recorded audio for testing
+                    </p>
+                </div>
+
                 <!-- Alternative: Text input for questions -->
                 <div class="text-question-area">
                     <h4 style="margin-bottom: 10px;">Or type your question:</h4>
@@ -387,40 +397,14 @@
     </div>
 
     <script>
+        // Replace the JavaScript section in your demo.html with this:
         let isRecording = false;
         let mediaRecorder = null;
         let audioChunks = [];
-        let currentSessionId = 'demo-session-' + Date.now();
+        let currentSessionId = null;
 
-        // File upload handling
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const loading = document.getElementById('upload-loading');
-            const carePlan = document.getElementById('care-plan');
-            const successMessage = document.getElementById('success-message');
-
-            loading.classList.add('show');
-            carePlan.classList.remove('show');
-            successMessage.classList.remove('show');
-
-            // Simulate processing
-            setTimeout(() => {
-                generateMockCarePlan();
-                loading.classList.remove('show');
-                carePlan.classList.add('show');
-                successMessage.classList.add('show');
-
-                // Auto-hide success message
-                setTimeout(() => {
-                    successMessage.classList.remove('show');
-                }, 3000);
-            }, 2500);
-        }
-
-        // Process manual text input
-        function processDocumentText() {
+        // Process manual text input - REAL API CALL
+        async function processDocumentText() {
             const documentText = document.getElementById('document-text').value.trim();
             if (!documentText) {
                 alert('Please enter some discharge instructions first!');
@@ -435,92 +419,37 @@
             carePlan.classList.remove('show');
             successMessage.classList.remove('show');
 
-            // In real app, this would call your backend:
-            // fetch('/process-document', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({ document_text: documentText })
-            // })
+            try {
+                const response = await fetch('/process-document', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ document_text: documentText })
+                });
 
-            setTimeout(() => {
-                generateSmartCarePlan(documentText);
+                const data = await response.json();
+
+                if (data.success) {
+                    currentSessionId = data.session_id;
+                    document.getElementById('care-plan-content').textContent = data.care_plan.response || data.care_plan;
+                    loading.classList.remove('show');
+                    carePlan.classList.add('show');
+                    successMessage.classList.add('show');
+
+                    setTimeout(() => {
+                        successMessage.classList.remove('show');
+                    }, 3000);
+                } else {
+                    loading.classList.remove('show');
+                    alert('Error: ' + (data.error || 'Failed to generate care plan'));
+                }
+            } catch (error) {
                 loading.classList.remove('show');
-                carePlan.classList.add('show');
-                successMessage.classList.add('show');
-
-                setTimeout(() => {
-                    successMessage.classList.remove('show');
-                }, 3000);
-            }, 2500);
+                alert('Network Error: ' + error.message);
+            }
         }
 
-        function generateSmartCarePlan(documentText) {
-            // Create a more intelligent mock based on input text
-            const carePlanContent = document.getElementById('care-plan-content');
-
-            // Simple keyword detection for smarter demo
-            const hasPainMeds = documentText.toLowerCase().includes('ibuprofen') || documentText.toLowerCase().includes('pain');
-            const hasAntibiotics = documentText.toLowerCase().includes('antibiotic') || documentText.toLowerCase().includes('amoxicillin');
-            const hasWalkingInstructions = documentText.toLowerCase().includes('walk') || documentText.toLowerCase().includes('activity');
-            const hasSurgery = documentText.toLowerCase().includes('surgery') || documentText.toLowerCase().includes('operation');
-
-            let medicationSection = '';
-            if (hasPainMeds) {
-                medicationSection += '<div class="care-item">Pain medication (Ibuprofen 400mg) - Every 6 hours with food</div>';
-            }
-            if (hasAntibiotics) {
-                medicationSection += '<div class="care-item">Antibiotic (Amoxicillin 500mg) - 3 times daily for 7 days</div>';
-            }
-            if (!hasPainMeds && !hasAntibiotics) {
-                medicationSection = '<div class="care-item">Follow medication schedule as prescribed by your doctor</div>';
-            }
-
-            carePlanContent.innerHTML = `
-                <div class="care-section">
-                    <h3>💊 Medication Schedule</h3>
-                    ${medicationSection}
-                    <div class="care-item">Take all medications with food unless otherwise directed</div>
-                </div>
-
-                <div class="care-section">
-                    <h3>🚶 Activity Guidelines</h3>
-                    ${hasWalkingInstructions ?
-                        '<div class="care-item">Short walks (5-10 minutes) every 2 hours while awake</div>' :
-                        '<div class="care-item">Light activity as tolerated, avoid strenuous exercise</div>'
-                    }
-                    <div class="care-item">No lifting over 10 pounds for 2 weeks</div>
-                    <div class="care-item">Deep breathing exercises 3 times daily</div>
-                </div>
-
-                <div class="care-section">
-                    <h3>🩹 Wound Care</h3>
-                    <div class="care-item">Change dressing daily or when wet/dirty</div>
-                    <div class="care-item">Keep incision dry for first 48 hours</div>
-                    <div class="care-item">Watch for signs of infection: redness, swelling, unusual discharge</div>
-                </div>
-
-                <div class="care-section">
-                    <h3>⚠️ When to Call Doctor</h3>
-                    <div class="care-item">Fever over 101°F (38.3°C)</div>
-                    <div class="care-item">Severe pain not controlled by medication</div>
-                    <div class="care-item">Signs of infection at incision site</div>
-                    <div class="care-item">Unusual bleeding or discharge</div>
-                </div>
-
-                <div class="care-section">
-                    <h3>📅 Follow-up Appointments</h3>
-                    <div class="care-item">Post-op check: 1 week from surgery date</div>
-                    <div class="care-item">Suture removal: 10-14 days post-surgery</div>
-                </div>
-            `;
-        }
-
-        function generateMockCarePlan() {
-            generateSmartCarePlan("General post-surgery care with pain management and activity restrictions");
-        }
-
-        // Text question handling
-        function askTextQuestion() {
+        // Text question handling - REAL API CALL
+        async function askTextQuestion() {
             const questionInput = document.getElementById('question-input');
             const question = questionInput.value.trim();
 
@@ -535,46 +464,35 @@
             voiceLoading.classList.add('show');
             chatResponse.classList.remove('show');
 
-            // Simulate processing
-            setTimeout(() => {
-                generateSmartResponse(question);
+            try {
+                const response = await fetch('/ask-question', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        question: question,
+                        session_id: currentSessionId
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentSessionId = data.session_id;
+                    document.getElementById('ai-response-content').textContent = data.response.response || data.response;
+                    voiceLoading.classList.remove('show');
+                    chatResponse.classList.add('show');
+                    questionInput.value = ''; // Clear input
+                } else {
+                    voiceLoading.classList.remove('show');
+                    alert('Error: ' + (data.error || 'Failed to get response'));
+                }
+            } catch (error) {
                 voiceLoading.classList.remove('show');
-                chatResponse.classList.add('show');
-                questionInput.value = ''; // Clear input
-            }, 1500);
-
-            // In real app:
-            // fetch('/ask-question', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({ question: question, session_id: currentSessionId })
-            // })
-        }
-
-        function generateSmartResponse(question) {
-            const responseContent = document.getElementById('ai-response-content');
-            const lowerQuestion = question.toLowerCase();
-
-            let response = '';
-
-            if (lowerQuestion.includes('pain') || lowerQuestion.includes('hurt')) {
-                response = "It's normal to experience some discomfort after surgery. Take your prescribed pain medication as directed - typically every 6 hours with food. If pain becomes severe or unmanageable, contact your healthcare provider immediately. Ice can also help reduce swelling and discomfort.";
-            } else if (lowerQuestion.includes('walk') || lowerQuestion.includes('exercise') || lowerQuestion.includes('activity')) {
-                response = "Light walking is encouraged and helps prevent blood clots. Start with short 5-10 minute walks every few hours. Avoid strenuous activities, heavy lifting (over 10 pounds), or intense exercise for at least 2 weeks. Listen to your body and rest when needed.";
-            } else if (lowerQuestion.includes('infection') || lowerQuestion.includes('wound') || lowerQuestion.includes('incision')) {
-                response = "Watch for signs of infection including increased redness, warmth, swelling, or unusual discharge from the incision site. Keep the wound clean and dry, change dressings as instructed. If you notice any concerning changes or develop a fever over 101°F, contact your doctor immediately.";
-            } else if (lowerQuestion.includes('medication') || lowerQuestion.includes('medicine')) {
-                response = "Take all medications exactly as prescribed, even if you start feeling better. Take pain medication and antibiotics with food to reduce stomach upset. Don't skip doses of antibiotics - complete the full course. If you experience side effects, contact your healthcare provider.";
-            } else if (lowerQuestion.includes('sleep') || lowerQuestion.includes('rest')) {
-                response = "Adequate rest is crucial for healing. You may need to sleep in a slightly elevated position for comfort. It's normal to feel more tired than usual - this is your body's way of healing. Take naps as needed and aim for 7-8 hours of sleep per night.";
-            } else {
-                response = "That's a great question about your recovery. Based on your individual situation, I recommend following your discharge instructions closely and contacting your healthcare provider if you have specific concerns. Remember, every recovery is different, and it's always best to err on the side of caution with your health.";
+                alert('Network Error: ' + error.message);
             }
-
-            responseContent.textContent = response;
         }
 
-        // Voice recording handling
+        // Voice recording handling - REAL IMPLEMENTATION
         async function toggleRecording() {
             const recordBtn = document.getElementById('record-btn');
             const recordStatus = document.getElementById('record-status');
@@ -603,6 +521,7 @@
                     recordStatus.textContent = 'Recording... Click to stop';
                 } catch (error) {
                     alert('Could not access microphone. Please check permissions or use the text input instead.');
+                    console.error('Microphone error:', error);
                 }
             } else {
                 mediaRecorder.stop();
@@ -612,58 +531,139 @@
                 recordStatus.textContent = 'Processing your question...';
                 voiceLoading.classList.add('show');
                 chatResponse.classList.remove('show');
+
+                // Stop all audio tracks
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
             }
         }
 
-        function processVoiceQuestion(audioBlob) {
-            // Simulate voice processing
-            setTimeout(() => {
-                // Mock transcription and response
-                const mockQuestions = [
-                    "How much pain is normal after surgery?",
-                    "When can I start walking around more?",
-                    "What signs of infection should I watch for?",
-                    "Can I take my medication with food?",
-                    "How long until I feel better?"
-                ];
+        // Process voice question - REAL API CALL
+        async function processVoiceQuestion(audioBlob) {
+            try {
+                // Create form data for audio upload
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'question.wav');
+                formData.append('session_id', currentSessionId || '');
 
-                const randomQuestion = mockQuestions[Math.floor(Math.random() * mockQuestions.length)];
-                generateSmartResponse(randomQuestion);
+                const response = await fetch('/process-voice-question', {
+                    method: 'POST',
+                    body: formData
+                });
 
+                const data = await response.json();
+
+                if (data.success) {
+                    currentSessionId = data.session_id;
+
+                    // Show what the user said
+                    console.log('Transcribed question:', data.patient_question);
+
+                    // Show AI response
+                    document.getElementById('ai-response-content').textContent = data.response.response || data.response;
+                    document.getElementById('voice-loading').classList.remove('show');
+                    document.getElementById('chat-response').classList.add('show');
+                    document.getElementById('record-status').textContent = 'Click to ask another question';
+                } else {
+                    document.getElementById('voice-loading').classList.remove('show');
+                    document.getElementById('record-status').textContent = 'Click to start recording';
+                    alert('Error: ' + (data.error || 'Failed to process voice'));
+                }
+            } catch (error) {
                 document.getElementById('voice-loading').classList.remove('show');
-                document.getElementById('chat-response').classList.add('show');
-                document.getElementById('record-status').textContent = 'Click to ask another question';
-            }, 2000);
+                document.getElementById('record-status').textContent = 'Click to start recording';
+                alert('Network Error: ' + error.message);
+            }
+        }
 
-            // In real app, this would upload audio to your backend
+        async function testWithAudioFile() {
+            const voiceLoading = document.getElementById('voice-loading');
+            const chatResponse = document.getElementById('chat-response');
+            const recordStatus = document.getElementById('record-status');
+
+            voiceLoading.classList.add('show');
+            chatResponse.classList.remove('show');
+            recordStatus.textContent = 'Processing test audio file...';
+
+            try {
+                const response = await fetch('/test-audio-demo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: currentSessionId
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Test audio response:', data);
+
+                if (data.success) {
+                    currentSessionId = data.session_id;
+
+                    // Show what was transcribed
+                    if (data.patient_question) {
+                        console.log('Transcribed from test file:', data.patient_question);
+                        document.getElementById('question-input').value = data.patient_question;
+                    }
+
+                    // Show AI response
+                    document.getElementById('ai-response-content').textContent = data.response.response || data.response;
+                    voiceLoading.classList.remove('show');
+                    chatResponse.classList.add('show');
+                    recordStatus.textContent = 'Test completed successfully!';
+
+                    // Show success message
+                    setTimeout(() => {
+                        recordStatus.textContent = 'Click microphone to record or test button to try again';
+                    }, 3000);
+
+                } else {
+                    console.error('Test audio error:', data.error);
+                    voiceLoading.classList.remove('show');
+                    recordStatus.textContent = 'Test failed - click to try again';
+                    alert('Test Error: ' + (data.error || 'Failed to process test audio'));
+                }
+            } catch (error) {
+                console.error('Network error:', error);
+                voiceLoading.classList.remove('show');
+                recordStatus.textContent = 'Test failed - click to try again';
+                alert('Network Error: ' + error.message);
+            }
+        }
+
+        // Keep the other functions for file upload and dashboard
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // For now, this still uses the text input method
+            alert('File upload: Please paste the text content in the text area below for now.');
         }
 
         function openDashboard() {
-            alert('🎉 Dashboard Feature Coming Soon!\n\nThis would open your personalized dashboard with:\n\n📱 Medication reminders\n📊 Progress tracking\n📅 Appointment schedule\n🚨 Emergency contacts\n📈 Recovery milestones\n\nFor now, you can see how the document processing and AI chat work!');
+            alert('🎉 Dashboard Feature Coming Soon!\n\nThis would open your personalized dashboard with:\n\n📱 Medication reminders\n📊 Progress tracking\n📅 Appointment schedule\n🚨 Emergency contacts\n📈 Recovery milestones');
         }
 
-        // Drag and drop functionality
+        // Drag and drop and keyboard shortcuts
         const uploadArea = document.querySelector('.upload-area');
+        if (uploadArea) {
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
 
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
-        });
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
 
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
-
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                document.getElementById('file-input').files = files;
-                handleFileUpload({ target: { files: files } });
-            }
-        });
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileUpload({ target: { files: files } });
+                }
+            });
+        }
 
         // Allow Enter key to submit questions
         document.getElementById('question-input').addEventListener('keypress', function(e) {
@@ -674,9 +674,7 @@
 
         // Demo tip on page load
         window.addEventListener('load', function() {
-            setTimeout(() => {
-                console.log('💡 Demo Tip: Try pasting some discharge instructions in the text area to see the AI generate a personalized care plan!');
-            }, 1000);
+            console.log('💡 Demo Ready! Try pasting discharge instructions and asking questions via voice or text.');
         });
     </script>
 </body>
