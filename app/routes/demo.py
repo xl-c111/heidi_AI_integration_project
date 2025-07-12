@@ -1,10 +1,12 @@
-# app/routes/demo.py - ENHANCED with better error handling and debugging
+# app/routes/demo.py - ENHANCED with audio transcription support
 from flask import Blueprint, request, jsonify, render_template
 import os
 import traceback
+import tempfile
 from app.api.auth import get_jwt_token
 from app.api.ask_heidi import ask_ai_stream, test_ask_ai_with_fallbacks
 from app.api.session import create_session
+from app.api.transcript import start_transcription, upload_audio, finish_transcription, get_transcript
 
 demo_bp = Blueprint('demo', __name__)
 
@@ -25,6 +27,159 @@ def demo_home():
             <li><a href="/debug-api">Debug API</a></li>
         </ul>
         """
+
+@demo_bp.route('/transcribe-audio', methods=['POST'])
+def transcribe_audio():
+    """Handle audio file upload and transcription"""
+    print("=== TRANSCRIBE AUDIO CALLED ===")
+
+    try:
+        # Check if audio file is present
+        if 'audio_file' not in request.files:
+            return jsonify({
+                'success': False,
+                'error': 'No audio file provided'
+            }), 400
+
+        audio_file = request.files['audio_file']
+        session_id = request.form.get('session_id')
+
+        if audio_file.filename == '':
+            return jsonify({
+                'success': False,
+                'error': 'No audio file selected'
+            }), 400
+
+        print(f"Audio file: {audio_file.filename}")
+        print(f"Audio file size: {audio_file.content_length if hasattr(audio_file, 'content_length') else 'unknown'}")
+        print(f"Session ID: {session_id}")
+
+        # Get JWT token
+        jwt_token = get_jwt_token()
+        if not jwt_token or 'Error' in str(jwt_token):
+            return jsonify({
+                'success': False,
+                'error': 'Authentication failed',
+                'details': str(jwt_token)
+            }), 401
+
+        # Create new session if none provided
+        if not session_id:
+            session_id = create_session(jwt_token)
+            print(f"Created new session: {session_id}")
+
+            if isinstance(session_id, dict) and session_id.get("error"):
+                return jsonify({
+                    'success': False,
+                    'error': 'Session creation failed',
+                    'details': session_id
+                }), 500
+
+        # Save audio file temporarily
+        file_extension = os.path.splitext(audio_file.filename)[1]
+        if not file_extension:
+            file_extension = '.wav'  # Default extension
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as temp_file:
+            audio_file.save(temp_file.name)
+            temp_file_path = temp_file.name
+            print(f"Saved audio to: {temp_file_path}")
+
+        try:
+            # Step 1: Start transcription
+            print("Starting transcription...")
+            recording_id = start_transcription(jwt_token, session_id)
+            print(f"Started transcription: {recording_id}")
+
+            if isinstance(recording_id, dict) and recording_id.get("error"):
+                return jsonify({
+                    'success': False,
+                    'error': 'Failed to start transcription',
+                    'details': recording_id
+                }), 500
+
+            # Step 2: Upload audio file
+            print("Uploading audio...")
+            upload_result = upload_audio(jwt_token, session_id, recording_id, temp_file_path)
+            print(f"Upload result: {upload_result}")
+
+            if not upload_result.get("is_success", False):
+                return jsonify({
+                    'success': False,
+                    'error': 'Audio upload failed',
+                    'details': upload_result
+                }), 500
+
+            # Step 3: Finish transcription
+            print("Finishing transcription...")
+            finish_result = finish_transcription(jwt_token, session_id, recording_id)
+            print(f"Finish result: {finish_result}")
+
+            if not finish_result.get("is_success", False):
+                return jsonify({
+                    'success': False,
+                    'error': 'Failed to finish transcription',
+                    'details': finish_result
+                }), 500
+
+            # Step 4: Get transcript
+            print("Getting transcript...")
+            transcript_result = get_transcript(jwt_token, session_id)
+            print(f"Transcript result: {transcript_result}")
+
+            if isinstance(transcript_result, dict) and transcript_result.get("error"):
+                return jsonify({
+                    'success': False,
+                    'error': 'Failed to get transcript',
+                    'details': transcript_result
+                }), 500
+
+            # Extract transcript text
+            transcript_text = ""
+            if isinstance(transcript_result, dict):
+                # Try different possible keys for transcript text
+                transcript_text = (
+                    transcript_result.get('transcript') or
+                    transcript_result.get('text') or
+                    transcript_result.get('content') or
+                    transcript_result.get('speech_to_text') or
+                    str(transcript_result)
+                )
+            else:
+                transcript_text = str(transcript_result)
+
+            print(f"Extracted transcript: {transcript_text}")
+
+            if not transcript_text or transcript_text.strip() == '' or transcript_text == '{}':
+                return jsonify({
+                    'success': False,
+                    'error': 'No speech detected in audio file',
+                    'suggestion': 'Please try recording again with clearer speech'
+                }), 400
+
+            return jsonify({
+                'success': True,
+                'transcript': transcript_text.strip(),
+                'session_id': session_id,
+                'recording_id': recording_id
+            })
+
+        finally:
+            # Clean up temporary file
+            try:
+                os.unlink(temp_file_path)
+                print(f"Cleaned up temp file: {temp_file_path}")
+            except Exception as e:
+                print(f"Failed to clean up temp file: {e}")
+
+    except Exception as e:
+        print(f"Exception in transcribe_audio: {str(e)}")
+        print(f"Traceback: {traceback.format_exc()}")
+        return jsonify({
+            'success': False,
+            'error': f'Server error: {str(e)}',
+            'exception_type': type(e).__name__
+        }), 500
 
 @demo_bp.route('/debug-api')
 def debug_api():
@@ -440,4 +595,57 @@ def test_complete_flow():
         return jsonify({
             "error": str(e),
             "traceback": traceback.format_exc()
+        }), 500
+
+@demo_bp.route('/test-audio-transcription', methods=['POST'])
+def test_audio_transcription():
+    """Test audio transcription with a sample file"""
+    print("=== TESTING AUDIO TRANSCRIPTION ===")
+
+    try:
+        # Check if we have a test audio file
+        test_audio_path = "static/Going_Down_Stairs.mp3"
+        if not os.path.exists(test_audio_path):
+            return jsonify({
+                'error': 'Test audio file not found',
+                'expected_path': test_audio_path,
+                'suggestion': 'Upload an audio file via the /transcribe-audio endpoint instead'
+            }), 404
+
+        # Get JWT and session
+        jwt_token = get_jwt_token()
+        if 'Error' in str(jwt_token):
+            return jsonify({'error': 'JWT failed', 'details': jwt_token}), 401
+
+        session_id = create_session(jwt_token)
+        if isinstance(session_id, dict) and session_id.get("error"):
+            return jsonify({'error': 'Session creation failed', 'details': session_id}), 500
+
+        # Test transcription workflow
+        recording_id = start_transcription(jwt_token, session_id)
+        if isinstance(recording_id, dict) and recording_id.get("error"):
+            return jsonify({'error': 'Failed to start transcription', 'details': recording_id}), 500
+
+        upload_result = upload_audio(jwt_token, session_id, recording_id, test_audio_path)
+        if not upload_result.get("is_success", False):
+            return jsonify({'error': 'Audio upload failed', 'details': upload_result}), 500
+
+        finish_result = finish_transcription(jwt_token, session_id, recording_id)
+        if not finish_result.get("is_success", False):
+            return jsonify({'error': 'Failed to finish transcription', 'details': finish_result}), 500
+
+        transcript_result = get_transcript(jwt_token, session_id)
+
+        return jsonify({
+            'success': True,
+            'message': 'Audio transcription test completed',
+            'session_id': session_id,
+            'recording_id': recording_id,
+            'transcript': transcript_result
+        })
+
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'traceback': traceback.format_exc()
         }), 500
