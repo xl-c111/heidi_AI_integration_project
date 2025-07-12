@@ -94,12 +94,49 @@
             font-size: 0.9rem;
         }
 
+        .text-input-area {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .text-input-area textarea {
+            width: 100%;
+            min-height: 120px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            resize: vertical;
+        }
+
+        .process-btn {
+            background: #4facfe;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .process-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
         .care-plan {
             background: white;
             border-radius: 10px;
             padding: 20px;
             margin-top: 20px;
             display: none;
+            border: 2px solid #10b981;
         }
 
         .care-plan.show {
@@ -230,6 +267,47 @@
             display: block;
             animation: fadeIn 0.5s ease-in;
         }
+
+        .text-question-area {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .text-question-area input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .ask-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 8px;
+            font-size: 0.9rem;
+        }
+
+        .success-message {
+            background: #dcfce7;
+            border: 1px solid #16a34a;
+            color: #166534;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -249,6 +327,13 @@
                 </div>
                 <input type="file" id="file-input" class="file-input" accept=".jpg,.jpeg,.png,.pdf" onchange="handleFileUpload(event)">
 
+                <!-- Alternative: Manual text input for demo -->
+                <div class="text-input-area">
+                    <h4 style="margin-bottom: 10px;">Or paste your discharge instructions here:</h4>
+                    <textarea id="document-text" placeholder="Example: Patient discharged after knee surgery. Take Ibuprofen 400mg every 6 hours with food. Short walks recommended every 2 hours. No lifting over 10 pounds for 2 weeks. Follow-up appointment in 1 week. Watch for fever, redness, or unusual swelling..."></textarea>
+                    <button class="process-btn" onclick="processDocumentText()">📋 Generate Care Plan</button>
+                </div>
+
                 <div class="loading" id="upload-loading">
                     <div class="spinner"></div>
                     <p>Processing your document and generating care plan...</p>
@@ -260,6 +345,10 @@
                         <!-- Care plan will be populated here -->
                     </div>
                 </div>
+
+                <div class="success-message" id="success-message">
+                    ✅ Care plan generated successfully! Scroll down to ask questions.
+                </div>
             </div>
 
             <!-- Step 2: Voice Chat -->
@@ -269,6 +358,13 @@
 
                 <button class="record-btn" id="record-btn" onclick="toggleRecording()">🎤</button>
                 <p style="text-align: center; color: #64748b; margin-bottom: 15px;" id="record-status">Click to start recording</p>
+
+                <!-- Alternative: Text input for questions -->
+                <div class="text-question-area">
+                    <h4 style="margin-bottom: 10px;">Or type your question:</h4>
+                    <input type="text" id="question-input" placeholder="Ask about pain levels, activity restrictions, medication side effects, etc.">
+                    <button class="ask-btn" onclick="askTextQuestion()">Ask Heidi AI</button>
+                </div>
 
                 <div class="chat-response" id="chat-response">
                     <h4>🤖 Heidi AI Response:</h4>
@@ -294,7 +390,7 @@
         let isRecording = false;
         let mediaRecorder = null;
         let audioChunks = [];
-        let currentSessionId = null;
+        let currentSessionId = 'demo-session-' + Date.now();
 
         // File upload handling
         function handleFileUpload(event) {
@@ -303,34 +399,95 @@
 
             const loading = document.getElementById('upload-loading');
             const carePlan = document.getElementById('care-plan');
+            const successMessage = document.getElementById('success-message');
 
             loading.classList.add('show');
             carePlan.classList.remove('show');
+            successMessage.classList.remove('show');
 
-            // Simulate document processing and care plan generation
+            // Simulate processing
             setTimeout(() => {
                 generateMockCarePlan();
                 loading.classList.remove('show');
                 carePlan.classList.add('show');
-            }, 3000);
+                successMessage.classList.add('show');
 
-            // In real implementation, this would upload to your backend:
-            // uploadToBackend(file);
+                // Auto-hide success message
+                setTimeout(() => {
+                    successMessage.classList.remove('show');
+                }, 3000);
+            }, 2500);
         }
 
-        function generateMockCarePlan() {
+        // Process manual text input
+        function processDocumentText() {
+            const documentText = document.getElementById('document-text').value.trim();
+            if (!documentText) {
+                alert('Please enter some discharge instructions first!');
+                return;
+            }
+
+            const loading = document.getElementById('upload-loading');
+            const carePlan = document.getElementById('care-plan');
+            const successMessage = document.getElementById('success-message');
+
+            loading.classList.add('show');
+            carePlan.classList.remove('show');
+            successMessage.classList.remove('show');
+
+            // In real app, this would call your backend:
+            // fetch('/process-document', {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify({ document_text: documentText })
+            // })
+
+            setTimeout(() => {
+                generateSmartCarePlan(documentText);
+                loading.classList.remove('show');
+                carePlan.classList.add('show');
+                successMessage.classList.add('show');
+
+                setTimeout(() => {
+                    successMessage.classList.remove('show');
+                }, 3000);
+            }, 2500);
+        }
+
+        function generateSmartCarePlan(documentText) {
+            // Create a more intelligent mock based on input text
             const carePlanContent = document.getElementById('care-plan-content');
+
+            // Simple keyword detection for smarter demo
+            const hasPainMeds = documentText.toLowerCase().includes('ibuprofen') || documentText.toLowerCase().includes('pain');
+            const hasAntibiotics = documentText.toLowerCase().includes('antibiotic') || documentText.toLowerCase().includes('amoxicillin');
+            const hasWalkingInstructions = documentText.toLowerCase().includes('walk') || documentText.toLowerCase().includes('activity');
+            const hasSurgery = documentText.toLowerCase().includes('surgery') || documentText.toLowerCase().includes('operation');
+
+            let medicationSection = '';
+            if (hasPainMeds) {
+                medicationSection += '<div class="care-item">Pain medication (Ibuprofen 400mg) - Every 6 hours with food</div>';
+            }
+            if (hasAntibiotics) {
+                medicationSection += '<div class="care-item">Antibiotic (Amoxicillin 500mg) - 3 times daily for 7 days</div>';
+            }
+            if (!hasPainMeds && !hasAntibiotics) {
+                medicationSection = '<div class="care-item">Follow medication schedule as prescribed by your doctor</div>';
+            }
+
             carePlanContent.innerHTML = `
                 <div class="care-section">
                     <h3>💊 Medication Schedule</h3>
-                    <div class="care-item">Pain medication (Ibuprofen 400mg) - Every 6 hours with food</div>
-                    <div class="care-item">Antibiotic (Amoxicillin 500mg) - 3 times daily for 7 days</div>
-                    <div class="care-item">Anti-nausea medication - As needed</div>
+                    ${medicationSection}
+                    <div class="care-item">Take all medications with food unless otherwise directed</div>
                 </div>
 
                 <div class="care-section">
                     <h3>🚶 Activity Guidelines</h3>
-                    <div class="care-item">Short walks (5-10 minutes) every 2 hours while awake</div>
+                    ${hasWalkingInstructions ?
+                        '<div class="care-item">Short walks (5-10 minutes) every 2 hours while awake</div>' :
+                        '<div class="care-item">Light activity as tolerated, avoid strenuous exercise</div>'
+                    }
                     <div class="care-item">No lifting over 10 pounds for 2 weeks</div>
                     <div class="care-item">Deep breathing exercises 3 times daily</div>
                 </div>
@@ -347,6 +504,7 @@
                     <div class="care-item">Fever over 101°F (38.3°C)</div>
                     <div class="care-item">Severe pain not controlled by medication</div>
                     <div class="care-item">Signs of infection at incision site</div>
+                    <div class="care-item">Unusual bleeding or discharge</div>
                 </div>
 
                 <div class="care-section">
@@ -355,6 +513,65 @@
                     <div class="care-item">Suture removal: 10-14 days post-surgery</div>
                 </div>
             `;
+        }
+
+        function generateMockCarePlan() {
+            generateSmartCarePlan("General post-surgery care with pain management and activity restrictions");
+        }
+
+        // Text question handling
+        function askTextQuestion() {
+            const questionInput = document.getElementById('question-input');
+            const question = questionInput.value.trim();
+
+            if (!question) {
+                alert('Please enter a question first!');
+                return;
+            }
+
+            const voiceLoading = document.getElementById('voice-loading');
+            const chatResponse = document.getElementById('chat-response');
+
+            voiceLoading.classList.add('show');
+            chatResponse.classList.remove('show');
+
+            // Simulate processing
+            setTimeout(() => {
+                generateSmartResponse(question);
+                voiceLoading.classList.remove('show');
+                chatResponse.classList.add('show');
+                questionInput.value = ''; // Clear input
+            }, 1500);
+
+            // In real app:
+            // fetch('/ask-question', {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify({ question: question, session_id: currentSessionId })
+            // })
+        }
+
+        function generateSmartResponse(question) {
+            const responseContent = document.getElementById('ai-response-content');
+            const lowerQuestion = question.toLowerCase();
+
+            let response = '';
+
+            if (lowerQuestion.includes('pain') || lowerQuestion.includes('hurt')) {
+                response = "It's normal to experience some discomfort after surgery. Take your prescribed pain medication as directed - typically every 6 hours with food. If pain becomes severe or unmanageable, contact your healthcare provider immediately. Ice can also help reduce swelling and discomfort.";
+            } else if (lowerQuestion.includes('walk') || lowerQuestion.includes('exercise') || lowerQuestion.includes('activity')) {
+                response = "Light walking is encouraged and helps prevent blood clots. Start with short 5-10 minute walks every few hours. Avoid strenuous activities, heavy lifting (over 10 pounds), or intense exercise for at least 2 weeks. Listen to your body and rest when needed.";
+            } else if (lowerQuestion.includes('infection') || lowerQuestion.includes('wound') || lowerQuestion.includes('incision')) {
+                response = "Watch for signs of infection including increased redness, warmth, swelling, or unusual discharge from the incision site. Keep the wound clean and dry, change dressings as instructed. If you notice any concerning changes or develop a fever over 101°F, contact your doctor immediately.";
+            } else if (lowerQuestion.includes('medication') || lowerQuestion.includes('medicine')) {
+                response = "Take all medications exactly as prescribed, even if you start feeling better. Take pain medication and antibiotics with food to reduce stomach upset. Don't skip doses of antibiotics - complete the full course. If you experience side effects, contact your healthcare provider.";
+            } else if (lowerQuestion.includes('sleep') || lowerQuestion.includes('rest')) {
+                response = "Adequate rest is crucial for healing. You may need to sleep in a slightly elevated position for comfort. It's normal to feel more tired than usual - this is your body's way of healing. Take naps as needed and aim for 7-8 hours of sleep per night.";
+            } else {
+                response = "That's a great question about your recovery. Based on your individual situation, I recommend following your discharge instructions closely and contacting your healthcare provider if you have specific concerns. Remember, every recovery is different, and it's always best to err on the side of caution with your health.";
+            }
+
+            responseContent.textContent = response;
         }
 
         // Voice recording handling
@@ -385,7 +602,7 @@
                     recordBtn.textContent = '⏹️';
                     recordStatus.textContent = 'Recording... Click to stop';
                 } catch (error) {
-                    alert('Could not access microphone. Please check permissions.');
+                    alert('Could not access microphone. Please check permissions or use the text input instead.');
                 }
             } else {
                 mediaRecorder.stop();
@@ -399,34 +616,30 @@
         }
 
         function processVoiceQuestion(audioBlob) {
-            // Simulate processing voice question
+            // Simulate voice processing
             setTimeout(() => {
-                const responses = [
-                    "Based on your surgery type, it's normal to experience some discomfort for the first few days. Make sure you're taking your pain medication as prescribed and getting adequate rest. If pain becomes severe or unmanageable, contact your healthcare provider.",
-                    "Your recovery is progressing well! Light activities like short walks are encouraged as they help prevent blood clots and promote healing. However, avoid any strenuous activities or heavy lifting as instructed.",
-                    "It's important to keep your incision clean and dry. Change your dressing as directed and watch for any signs of infection like increased redness, warmth, swelling, or unusual discharge. These symptoms warrant immediate medical attention.",
-                    "Your medication schedule is designed to manage pain and prevent infection. Take them exactly as prescribed, even if you're feeling better. Completing the full course of antibiotics is especially important.",
-                    "Some swelling and bruising around the surgical site is normal. You can help reduce swelling by elevating the affected area when possible and applying ice as directed by your healthcare team."
+                // Mock transcription and response
+                const mockQuestions = [
+                    "How much pain is normal after surgery?",
+                    "When can I start walking around more?",
+                    "What signs of infection should I watch for?",
+                    "Can I take my medication with food?",
+                    "How long until I feel better?"
                 ];
 
-                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                const randomQuestion = mockQuestions[Math.floor(Math.random() * mockQuestions.length)];
+                generateSmartResponse(randomQuestion);
 
-                document.getElementById('ai-response-content').textContent = randomResponse;
                 document.getElementById('voice-loading').classList.remove('show');
                 document.getElementById('chat-response').classList.add('show');
                 document.getElementById('record-status').textContent = 'Click to ask another question';
             }, 2000);
 
-            // In real implementation, this would send to your backend:
-            // sendVoiceToBackend(audioBlob);
+            // In real app, this would upload audio to your backend
         }
 
         function openDashboard() {
-            // This would normally open the dashboard in a new tab/window
-            alert('Opening your personalized care dashboard...\n\nThis would show:\n• Daily medication reminders\n• Progress tracking\n• Appointment schedule\n• Emergency contacts\n• Recovery milestones');
-
-            // In real implementation:
-            // window.open('/dashboard', '_blank');
+            alert('🎉 Dashboard Feature Coming Soon!\n\nThis would open your personalized dashboard with:\n\n📱 Medication reminders\n📊 Progress tracking\n📅 Appointment schedule\n🚨 Emergency contacts\n📈 Recovery milestones\n\nFor now, you can see how the document processing and AI chat work!');
         }
 
         // Drag and drop functionality
@@ -450,6 +663,20 @@
                 document.getElementById('file-input').files = files;
                 handleFileUpload({ target: { files: files } });
             }
+        });
+
+        // Allow Enter key to submit questions
+        document.getElementById('question-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                askTextQuestion();
+            }
+        });
+
+        // Demo tip on page load
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                console.log('💡 Demo Tip: Try pasting some discharge instructions in the text area to see the AI generate a personalized care plan!');
+            }, 1000);
         });
     </script>
 </body>
