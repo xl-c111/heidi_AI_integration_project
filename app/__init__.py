@@ -19,7 +19,8 @@ def create_app():
     app.register_blueprint(transcript_bp)
 
     from app.routes.session import session_bp as sessions_bp
-    app.register_blueprint(sessions_bp)
+    app.register_blueprint(sessions_bp, url_prefix="/sessions")
+
 
     from app.routes.ask_heidi import ask_heidi_bp
     app.register_blueprint(ask_heidi_bp)
