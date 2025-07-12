@@ -29,4 +29,7 @@ def create_app():
     from app.routes.demo import demo_bp
     app.register_blueprint(demo_bp)
 
+    from app.routes.document import document_bp
+    app.register_blueprint(document_bp)
+
     return app

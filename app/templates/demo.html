@@ -392,32 +392,51 @@
         let audioChunks = [];
         let currentSessionId = 'demo-session-' + Date.now();
 
-        // File upload handling
         function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+        
+    const file = event.target.files[0];
+    if (!file) return;
 
-            const loading = document.getElementById('upload-loading');
-            const carePlan = document.getElementById('care-plan');
-            const successMessage = document.getElementById('success-message');
+    const loading = document.getElementById('upload-loading');
+    const carePlan = document.getElementById('care-plan');
+    const successMessage = document.getElementById('success-message');
 
-            loading.classList.add('show');
-            carePlan.classList.remove('show');
-            successMessage.classList.remove('show');
+    loading.classList.add('show');
+    carePlan.classList.remove('show');
+    successMessage.classList.remove('show');
 
-            // Simulate processing
-            setTimeout(() => {
-                generateMockCarePlan();
-                loading.classList.remove('show');
-                carePlan.classList.add('show');
-                successMessage.classList.add('show');
+    const formData = new FormData();
+    formData.append('file', file);
 
-                // Auto-hide success message
-                setTimeout(() => {
-                    successMessage.classList.remove('show');
-                }, 3000);
-            }, 2500);
+    fetch('/upload-document', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.error) {
+            alert('Error: ' + data.error);
+            loading.classList.remove('show');
+            return;
         }
+
+        const text = data.text || '';
+        generateSmartCarePlan(text);
+        document.getElementById('document-text').value = text;
+        loading.classList.remove('show');
+        carePlan.classList.add('show');
+        successMessage.classList.add('show');
+
+        setTimeout(() => {
+            successMessage.classList.remove('show');
+        }, 3000);
+    })
+    .catch(err => {
+        alert('Something went wrong: ' + err.message);
+        loading.classList.remove('show');
+    });
+}
+
 
         // Process manual text input
         function processDocumentText() {
