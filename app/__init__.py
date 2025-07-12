@@ -24,5 +24,9 @@ def create_app():
 
     from app.routes.ask_heidi import ask_heidi_bp
     app.register_blueprint(ask_heidi_bp)
-    
+
+    # Add demo blueprint
+    from app.routes.demo import demo_bp
+    app.register_blueprint(demo_bp)
+
     return app

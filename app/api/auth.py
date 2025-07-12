@@ -1,7 +1,7 @@
 import os
 import requests
-
 from app.api import BASE_URL
+
 def get_jwt_token():
     url = f"{BASE_URL}/jwt"
 
@@ -12,6 +12,7 @@ def get_jwt_token():
         "email": os.getenv("HEIDI_EMAIL"),
         "third_party_internal_id": os.getenv("HEIDI_USER_ID")
     }
+
     try:
         response = requests.get(url, headers=headers, params=params)
         if response.status_code == 200:

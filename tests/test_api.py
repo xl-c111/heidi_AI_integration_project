@@ -1,4 +1,7 @@
-# test_api.py - Run this to verify your Heidi API works
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from app.api.auth import get_jwt_token
 from app.api.session import create_session
 from app.api.ask_heidi import ask_ai_stream

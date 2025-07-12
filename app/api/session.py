@@ -7,17 +7,26 @@ def create_session(jwt_token):
     url = f"{BASE_URL}/sessions"
     headers = {
         "Authorization": f"Bearer {jwt_token}",
+        "Content-Type": "application/json",
         "Heidi-Api-Key": os.getenv("HEIDI_API_KEY")
     }
-    params = {
+
+    # Add payload instead of params
+    payload = {
         "email": os.getenv("HEIDI_EMAIL"),
         "third_party_internal_id": os.getenv("HEIDI_USER_ID")
     }
 
     try:
-        response = requests.post(url, headers=headers, params=params)
-        if response.status_code == 200:
-            return response.json().get("session_id")
+        response = requests.post(url, headers=headers, json=payload)
+        print(f"Session creation response: {response.status_code}")
+        print(f"Response body: {response.text}")
+
+        if response.status_code == 200 or response.status_code == 201:
+            response_data = response.json()
+            # Try both possible response formats
+            session_id = response_data.get("session_id") or response_data.get("id")
+            return session_id
         else:
             return {
                 "error": True,
@@ -36,7 +45,6 @@ def get_session_details(jwt_token, session_id):
     url = f"{BASE_URL}/sessions/{session_id}"
     headers = {
         "Authorization": f"Bearer {jwt_token}",
-        "Content-Type": "application/json",
         "Heidi-Api-Key": os.getenv("HEIDI_API_KEY")
     }
     try:
@@ -69,7 +77,8 @@ def update_session(
     url = f"{BASE_URL}/sessions/{session_id}"
     headers = {
         "Authorization": f"Bearer {jwt_token}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Heidi-Api-Key": os.getenv("HEIDI_API_KEY")
     }
     payload = {}
     if duration is not None:
