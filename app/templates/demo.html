@@ -401,10 +401,56 @@
         let isRecording = false;
         let mediaRecorder = null;
         let audioChunks = [];
-        let currentSessionId = null;
+        let currentSessionId = 'demo-session-' + Date.now();
 
-        // Process manual text input - REAL API CALL
-        async function processDocumentText() {
+        function handleFileUpload(event) {
+        
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const loading = document.getElementById('upload-loading');
+    const carePlan = document.getElementById('care-plan');
+    const successMessage = document.getElementById('success-message');
+
+    loading.classList.add('show');
+    carePlan.classList.remove('show');
+    successMessage.classList.remove('show');
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    fetch('/upload-document', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.error) {
+            alert('Error: ' + data.error);
+            loading.classList.remove('show');
+            return;
+        }
+
+        const text = data.text || '';
+        generateSmartCarePlan(text);
+        document.getElementById('document-text').value = text;
+        loading.classList.remove('show');
+        carePlan.classList.add('show');
+        successMessage.classList.add('show');
+
+        setTimeout(() => {
+            successMessage.classList.remove('show');
+        }, 3000);
+    })
+    .catch(err => {
+        alert('Something went wrong: ' + err.message);
+        loading.classList.remove('show');
+    });
+}
+
+
+        // Process manual text input
+        function processDocumentText() {
             const documentText = document.getElementById('document-text').value.trim();
             if (!documentText) {
                 alert('Please enter some discharge instructions first!');
