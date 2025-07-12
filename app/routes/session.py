@@ -5,7 +5,7 @@ from app.api.session import create_session, get_session_details, update_session
 session_bp = Blueprint('session', __name__)
 
 
-@session_bp.route('/create', methods=['POST'])
+@session_bp.route('', methods=['POST'])
 def create():
     jwt_token = get_jwt_token()
     if not jwt_token:

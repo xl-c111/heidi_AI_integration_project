@@ -4,7 +4,7 @@ import os
 
 
 def create_session(jwt_token):
-    url = f"{BASE_URL}/templates/sessions"
+    url = f"{BASE_URL}/sessions"
     headers = {
         "Authorization": f"Bearer {jwt_token}",
         "Heidi-Api-Key": os.getenv("HEIDI_API_KEY")
@@ -17,7 +17,7 @@ def create_session(jwt_token):
     try:
         response = requests.post(url, headers=headers, params=params)
         if response.status_code == 200:
-            return response.json().session_id
+            return response.json().get("session_id")
         else:
             return {
                 "error": True,
