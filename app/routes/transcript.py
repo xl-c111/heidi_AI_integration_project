@@ -67,7 +67,7 @@ def full_transcription_demo():
         return jsonify({"error": True, "message": "Failed to start transcription"})
 
     # Step 3: Upload audio
-    audio_file_path = "static/Do_I_need_more_Panamax.mp3"
+    audio_file_path = "static/Going_Down_Stairs.mp3"
     if not os.path.exists(audio_file_path):
         return jsonify({"error": True, "message": "Audio file missing on server"})
 
