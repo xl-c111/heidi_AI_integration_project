@@ -4,7 +4,6 @@ import os
 
 
 def create_session(jwt_token):
-    # FIXED: Remove /templates from URL path
     url = f"{BASE_URL}/sessions"
     headers = {
         "Authorization": f"Bearer {jwt_token}",
@@ -42,6 +41,7 @@ def create_session(jwt_token):
 
 
 def get_session_details(jwt_token, session_id):
+    print(os.getenv("HEIDI_API_KEY"))
     url = f"{BASE_URL}/sessions/{session_id}"
     headers = {
         "Authorization": f"Bearer {jwt_token}",
