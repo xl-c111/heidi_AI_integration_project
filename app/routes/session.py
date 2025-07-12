@@ -5,7 +5,7 @@ from app.api.session import create_session, get_session_details, update_session
 session_bp = Blueprint('session', __name__)
 
 
-@session_bp.route('/create', methods=['POST'])
+@session_bp.route('', methods=['POST'])
 def create():
     jwt_token = get_jwt_token()
     if not jwt_token:
@@ -24,14 +24,14 @@ def details(session_id):
     if not jwt_token:
         return jsonify({"error": "JWT token not found"}), 401
 
-    session_details = get_session_details(session_id, jwt_token)
+    session_details = get_session_details( jwt_token,session_id)
     if isinstance(session_details, dict) and session_details.get("error"):
         return jsonify(session_details), session_details.get("status_code", 500)
 
     return jsonify(session_details), 200
 
 
-@session_bp.route('/<session_id>', methods=['PUT'])
+@session_bp.route('/<session_id>', methods=['PATCH'])
 def update_session_route(session_id):
     jwt_token = get_jwt_token()
     if not jwt_token:
