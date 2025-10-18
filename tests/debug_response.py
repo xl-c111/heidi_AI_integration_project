@@ -1,10 +1,29 @@
 # debug_response.py - Let's see what we're actually getting back
-import requests
+import os
 
-BASE_URL = "https://registrar.api.heidihealth.com/api/v2/ml-scribe/open-api"
-API_KEY = "MI0QanRHLm4ovFkBVqcBrx3LCiWLT8eu"
-EMAIL = "marwa.almahmoud@hotmail.com"
-USER_ID = "marwa-hack"
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
+
+BASE_URL = os.getenv(
+    "HEIDI_BASE_URL",
+    "https://registrar.api.heidihealth.com/api/v2/ml-scribe/open-api",
+)
+
+
+def require_env(name: str) -> str:
+    value = os.getenv(name)
+    if not value:
+        raise RuntimeError(
+            f"{name} is not set. Copy .env.example to .env and provide valid credentials."
+        )
+    return value
+
+
+API_KEY = require_env("HEIDI_API_KEY")
+EMAIL = require_env("HEIDI_EMAIL")
+USER_ID = require_env("HEIDI_USER_ID")
 
 def get_jwt_token():
     url = f"{BASE_URL}/jwt"

@@ -23,20 +23,27 @@ This project demonstrates full integration with the [Heidi AI API](https://regis
 
 ### 1. Clone and Setup
 ```bash
-git clone <repository-url>
+git clone <https://github.com/xl-c111/heidi_AI_integration_project.git>
 cd heidi_AI_integration_project
 
 # Install dependencies
+python3 -m venv venv
+source venv/bin/activate
 pip3 install -r requirements.txt
 ```
 
 ### 2. Configure Environment
-Create a `.env` file in the project root:
+Copy the provided template and edit it with the credentials your reviewer or teammate shared:
 ```bash
-HEIDI_API_KEY=your_api_key_here
-HEIDI_EMAIL=your_email_here
-HEIDI_USER_ID=your_user_id_here
+cp .env.example .env
 ```
+
+Update `.env` with:
+- `HEIDI_API_KEY` – your organization’s Heidi API key  
+- `HEIDI_EMAIL` – the user email registered with Heidi  
+- `HEIDI_USER_ID` – the corresponding Heidi user UID
+
+> **Tip for testers:** No credentials? Reach out to the maintainer for temporary sandbox values—most endpoints require them.
 
 ### 3. Test API Connection
 ```bash
@@ -93,7 +100,8 @@ Try asking these questions in the chat:
 
 ```text
 heidi-ai-integration/
-├── .env                          # API credentials (create this)
+├── .env.example                 # Sample environment configuration
+├── .env                         # Local overrides (not committed)
 ├── .gitignore
 ├── README.md                     # This file
 ├── requirements.txt              # Python dependencies

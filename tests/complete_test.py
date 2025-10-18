@@ -1,10 +1,28 @@
 # fixed_complete_test.py - With correct content_type
+import os
 import requests
+from dotenv import load_dotenv
 
-BASE_URL = "https://registrar.api.heidihealth.com/api/v2/ml-scribe/open-api"
-API_KEY = "MI0QanRHLm4ovFkBVqcBrx3LCiWLT8eu"
-EMAIL = "marwa.almahmoud@hotmail.com"
-USER_ID = "marwa-hack"
+load_dotenv()
+
+BASE_URL = os.getenv(
+    "HEIDI_BASE_URL",
+    "https://registrar.api.heidihealth.com/api/v2/ml-scribe/open-api",
+)
+
+
+def require_env(name: str) -> str:
+    value = os.getenv(name)
+    if not value:
+        raise RuntimeError(
+            f"{name} is not set. Copy .env.example to .env and provide valid credentials."
+        )
+    return value
+
+
+API_KEY = require_env("HEIDI_API_KEY")
+EMAIL = require_env("HEIDI_EMAIL")
+USER_ID = require_env("HEIDI_USER_ID")
 
 def get_jwt_token():
     print("=== Step 1: Getting JWT Token ===")

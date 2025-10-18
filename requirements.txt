@@ -4,3 +4,4 @@ requests
 pydub
 aiohttp
 websockets
+pymupdf
