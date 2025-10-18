@@ -4,3 +4,6 @@ requests
 pydub
 aiohttp
 websockets
+pymupdf
+pytest
+responses

@@ -10,7 +10,6 @@ def get_consult_note_templates(jwt_token):
         "Authorization": f"Bearer {jwt_token}",
         "Heidi-Api-Key": os.getenv("HEIDI_API_KEY")
     }
-    print("API KEY:" + os.getenv("HEIDI_API_KEY"))
     params = {
         "email": os.getenv("HEIDI_EMAIL"),
         "third_party_internal_id": os.getenv("HEIDI_USER_ID")
