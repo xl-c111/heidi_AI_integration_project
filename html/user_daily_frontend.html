@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post-Surgery Care Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+            padding: 30px;
+            color: white;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .steps {
+            padding: 30px;
+        }
+
+        .step {
+            margin-bottom: 40px;
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 5px solid #4facfe;
+            background: #f8fafc;
+        }
+
+        .step h2 {
+            color: #1e293b;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .upload-area {
+            border: 2px dashed #4facfe;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .upload-area:hover {
+            border-color: #00f2fe;
+            background: #f0f9ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #00f2fe;
+            background: #e0f2fe;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-text {
+            font-size: 1.1rem;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .text-input-area {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .text-input-area textarea {
+            width: 100%;
+            min-height: 120px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            resize: vertical;
+        }
+
+        .process-btn {
+            background: #4facfe;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .process-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .care-plan {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+            border: 2px solid #10b981;
+        }
+
+        .care-plan.show {
+            display: block;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .care-section {
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border-left: 4px solid #4facfe;
+        }
+
+        .care-section h3 {
+            color: #1e293b;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .care-item {
+            background: white;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border-left: 2px solid #e2e8f0;
+        }
+
+        .btn {
+            background: #4facfe;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #4facfe;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #4facfe;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .voice-section {
+            background: #fef3f2;
+            border-left-color: #10b981;
+        }
+
+        .record-btn {
+            background: #10b981;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            margin: 10px auto;
+            display: block;
+            transition: all 0.3s ease;
+        }
+
+        .record-btn:hover {
+            background: #059669;
+            transform: scale(1.1);
+        }
+
+        .record-btn.recording {
+            background: #ef4444;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .chat-response {
+            background: #ecfdf5;
+            border: 1px solid #10b981;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .chat-response.show {
+            display: block;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .text-question-area {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .text-question-area input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .ask-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 8px;
+            font-size: 0.9rem;
+        }
+
+        .success-message {
+            background: #dcfce7;
+            border: 1px solid #16a34a;
+            color: #166534;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to day 5 after your surgery</h1>
+            <p>Today is 12 July 2025</p>
+        </div>
+
+        <div class="steps">
+            <!-- Step 1: Document Upload -->
+            <div class="s<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Rehabilitation Dashboard - Post-Surgery Care</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+            padding: 30px;
+            color: white;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .patient-info {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .patient-info span {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .dashboard-content {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-left: 5px solid #4facfe;
+        }
+
+        .card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .card h2 {
+            color: #1e293b;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .today-plan {
+            background: #f0f9ff;
+            border-left-color: #10b981;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            width: 0%;
+            transition: width 1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-size: 0.8rem;
+        }
+
+        .task-list {
+            list-style: none;
+        }
+
+        .task-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-left: 3px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .task-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .task-item.completed {
+            border-left-color: #10b981;
+            opacity: 0.8;
+        }
+
+        .task-checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #4facfe;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .task-checkbox.checked {
+            background: #10b981;
+            border-color: #10b981;
+        }
+
+        .task-checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-weight: bold;
+        }
+
+        .task-time {
+            background: #e0f2fe;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: #0369a1;
+            font-weight: 500;
+        }
+
+        .medication-card {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid #e2e8f0;
+        }
+
+        .medication-card.taken {
+            border-color: #10b981;
+            background: #ecfdf5;
+        }
+
+        .med-info h4 {
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+
+        .med-info p {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .take-btn {
+            background: #4facfe;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .take-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .take-btn.taken {
+            background: #10b981;
+            cursor: default;
+        }
+
+        .clinician-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-left: none;
+        }
+
+        .clinician-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .clinician-avatar {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #667eea;
+        }
+
+        .contact-details {
+            margin-top: 20px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+
+        .emergency-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            width: 100%;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .emergency-btn:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+        }
+
+        .comments-section {
+            background: #f8fafc;
+            border-left-color: #8b5cf6;
+        }
+
+        .comment-input {
+            width: 100%;
+            min-height: 100px;
+            padding: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            resize: vertical;
+        }
+
+        .submit-comment-btn {
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .submit-comment-btn:hover {
+            background: #7c3aed;
+            transform: translateY(-2px);
+        }
+
+        .previous-comments {
+            margin-top: 25px;
+        }
+
+        .comment {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 3px solid #8b5cf6;
+        }
+
+        .comment-date {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-bottom: 5px;
+        }
+
+        .comment-text {
+            color: #1e293b;
+            line-height: 1.5;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-box {
+            flex: 1;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #4facfe;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-top: 5px;
+        }
+
+        .achievement-badge {
+            display: inline-block;
+            background: #fbbf24;
+            color: #78350f;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin: 5px;
+            font-weight: 500;
+        }
+
+        .floating-help {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #4facfe;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .floating-help:hover {
+            transform: scale(1.1);
+            background: #2563eb;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+
+        <div class="dashboard-content">
+            <!-- Today's Plan Card -->
+            <div class="card today-plan">
+                <h2>📋 Today's Rehabilitation Task</h2>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="daily-progress" style="width: 30%;">30%</div>
+                </div>
+                <p style="text-align: center; color: #64748b; margin-bottom: 20px;">3 of 10 tasks completed</p>
+
+                <ul class="task-list">
+                    <li class="task-item completed" onclick="toggleTask(this)">
+                        <div class="task-checkbox checked"></div>
+                        <div style="flex: 1;">
+                            <strong>Morning Medication</strong>
+                            <p style="font-size: 0.9rem; color: #64748b;">Take prescribed pain relief and antibiotics</p>
+                        </div>
+                        <span class="task-time">8:00 AM</span>
+                    </li>
+
+                    <li class="task-item completed" onclick="toggleTask(this)">
+                        <div class="task-checkbox checked"></div>
+                        <div style="flex: 1;">
+                            <strong>Gentle Stretching</strong>
+                            <p style="font-size: 0.9rem; color: #64748b;">5 minutes of guided knee flexion exercises</p>
+                        </div>
+                        <span class="task-time">9:00 AM</span>
+                    </li>
+
+                    <li class="task-item completed" onclick="toggleTask(this)">
+                        <div class="task-checkbox checked"></div>
+                        <div style="flex: 1;">
+                            <strong>Short Walk #1</strong>
+                            <p style="font-size: 0.9rem; color: #64748b;">10-minute walk with walker assistance</p>
+                        </div>
+                        <span class="task-time">10:00 AM</span>
+                    </li>
+
+                    <li class="task-item" onclick="toggleTask(this)">
+                        <div class="task-checkbox"></div>
+                        <div style="flex: 1;">
+                            <strong>Ice Therapy</strong>
+                            <p style="font-size: 0.9rem; color: #64748b;">Apply ice pack for 20 minutes</p>
+                        </div>
+                        <span class="task-time">11:30 AM</span>
+                    </li>
+
+                    <li class="task-item" onclick="toggleTask(this)">
+                        <div class="task-checkbox"></div>
+                        <div style="flex: 1;">
+                            <strong>Afternoon Medication</strong>
+                            <p style="font-size: 0.9rem; color: #64748b;">Pain management medication</p>
+                        </div>
+                        <span class="task-time">2:00 PM</span>
+                    </li>
+
+                    <li class="task-item" onclick="toggleTask(this)">
+                        <div class="task-checkbox"></div>
+                        <div style="flex: 1;">
+                            <strong>Physical Therapy Session</strong>
+                            <p style="font-size: 0.9rem; color: #64748b;">30-minute guided PT exercises</p>
+                        </div>
+                        <span class="task-time">3:00 PM</span>
+                    </li>
+
+                    <li class="task-item" onclick="toggleTask(this)">
+                        <div class="task-checkbox"></div>
+                        <div style="flex: 1;">
+                            <strong>Short Walk #2</strong>
+                            <p style="font-size: 0.9rem; color: #64748b;">15-minute walk, focus on proper gait</p>
+                        </div>
+                        <span class="task-time">4:30 PM</span>
+                    </li>
+
+                    <li class="task-item" onclick="toggleTask(this)">
+                        <div class="task-checkbox"></div>
+                        <div style="flex: 1;">
+                            <strong>Evening Stretches</strong>
+                            <p style="font-size: 0.9rem; color: #64748b;">Gentle range-of-motion exercises</p>
+                        </div>
+                        <span class="task-time">6:00 PM</span>
+                    </li>
+
+                    <li class="task-item" onclick="toggleTask(this)">
+                        <div class="task-checkbox"></div>
+                        <div style="flex: 1;">
+                            <strong>Evening Medication</strong>
+                            <p style="font-size: 0.9rem; color: #64748b;">Final dose of antibiotics and pain relief</p>
+                        </div>
+                        <span class="task-time">8:00 PM</span>
+                    </li>
+
+                    <li class="task-item" onclick="toggleTask(this)">
+                        <div class="task-checkbox"></div>
+                        <div style="flex: 1;">
+                            <strong>Elevation & Rest</strong>
+                            <p style="font-size: 0.9rem; color: #64748b;">Elevate leg with pillows for 30 minutes</p>
+                        </div>
+                        <span class="task-time">9:00 PM</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Medication Tracker -->
+            <div class="card">
+                <h2>💊 Today's Medications</h2>
+                <div class="medication-card taken">
+                    <div class="med-info">
+                        <h4>Ibuprofen 400mg</h4>
+                        <p>Pain relief - With breakfast</p>
+                    </div>
+                    <button class="take-btn taken">✓ Taken</button>
+                </div>
+
+                <div class="medication-card">
+                    <div class="med-info">
+                        <h4>Amoxicillin 500mg</h4>
+                        <p>Antibiotic - With lunch</p>
+                    </div>
+                    <button class="take-btn" onclick="markMedicationTaken(this)">Take Now</button>
+                </div>
+
+                <div class="medication-card">
+                    <div class="med-info">
+                        <h4>Acetaminophen 500mg</h4>
+                        <p>Pain relief - Before bed</p>
+                    </div>
+                    <button class="take-btn" onclick="markMedicationTaken(this)">Take Now</button>
+                </div>
+
+                <div class="stats-row">
+                    <div class="stat-box">
+                        <div class="stat-number">95%</div>
+                        <div class="stat-label">Adherence</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">5</div>
+                        <div class="stat-label">Day Streak</div>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+
+            <!-- Progress Overview -->
+         
+                <div class="step voice-section">
+                <h2>📋 Step 1: Upload Your Medical Photos</h2>
+                <p style="margin-bottom: 15px;"> Upload a picture of your surgical wound. </p>
+                <div class="upload-area" onclick="document.getElementById('file-input').click()">
+                    <div class="upload-text">📄 Click to upload or drag & drop</div>
+                    <div class="upload-subtext">Upload Photo Here(JPG, PNG, PDF)</div>
+                </div>
+
+                <input type="file" id="file-input" class="file-input" accept=".jpg,.jpeg,.png,.pdf" onchange="handleFileUpload(event)">
+
+                <div class="loading" id="upload-loading">
+                    <div class="spinner"></div>
+                    <p>Processing your document and generating care plan...</p>
+                </div>
+
+                <div class="care-plan" id="care-plan">
+                    <h3>🎯 Your Personalized Care Plan</h3>
+                    <div id="care-plan-content">
+                        <!-- Care plan will be populated here -->
+                    </div>
+                </div>
+
+                <div class="success-message" id="success-message">
+                    ✅ Care plan generated successfully! Scroll down to ask questions.
+                </div>
+
+                </div>
+
+                
+                <!-- Step 2: Voice Chat -->
+            <div class="step voice-section">
+                <h2>💬 Step 2: Ask Questions About Your Recovery</h2>
+                <p style="margin-bottom: 15px;">Click the microphone to ask questions about your condition, medications, or recovery process.</p>
+
+                <button class="record-btn" id="record-btn" onclick="toggleRecording()">🎤</button>
+                <p style="text-align: center; color: #64748b; margin-bottom: 15px;" id="record-status">Click to start recording</p>
+
+                <!-- Alternative: Text input for questions -->
+                <div class="text-question-area">
+                    <h4 style="margin-bottom: 10px;">Or type your question:</h4>
+                    <input type="text" id="question-input" placeholder="Ask about pain levels, activity restrictions, medication side effects, etc.">
+                    <button class="ask-btn" onclick="askTextQuestion()">Ask Heidi AI</button>
+                </div>
+
+                <div class="chat-response" id="chat-response">
+                    <h4>🤖 Heidi AI Response:</h4>
+                    <div id="ai-response-content"></div>
+                </div>
+
+                <div class="loading" id="voice-loading">
+                    <div class="spinner"></div>
+                    <p>Processing your question...</p>
+                </div>
+            </div>
+        
+
+             
+            </div>
+
+            
+        </div>
+    </div>
+
+    <!-- Floating Help Button -->
+    <div class="floating-help" onclick="openHelp()">💬</div>
+
+    <script>
+        // Toggle task completion
+        function toggleTask(taskElement) {
+            const checkbox = taskElement.querySelector('.task-checkbox');
+            checkbox.classList.toggle('checked');
+            taskElement.classList.toggle('completed');
+            updateProgress();
+        }
+
+        // Update daily progress
+        function updateProgress() {
+            const totalTasks = document.querySelectorAll('.task-item').length;
+            const completedTasks = document.querySelectorAll('.task-item.completed').length;
+            const percentage = Math.round((completedTasks / totalTasks) * 100);
+            
+            const progressBar = document.getElementById('daily-progress');
+            progressBar.style.width = percentage + '%';
+            progressBar.textContent = percentage + '%';
+
+            // Update task counter
+            const taskCounter = document.querySelector('.today-plan p');
+            taskCounter.textContent = `${completedTasks} of ${totalTasks} tasks completed`;
+        }
+
+        // Mark medication as taken
+        function markMedicationTaken(button) {
+            const medCard = button.closest('.medication-card');
+            medCard.classList.add('taken');
+            button.classList.add('taken');
+            button.textContent = '✓ Taken';
+            button.onclick = null;
+
+            // Show success message
+            showNotification('Medication marked as taken! Great job staying on schedule.');
+        }
+
+        // Submit comment
+        function submitComment() {
+            const commentInput = document.getElementById('comment-input');
+            const commentText = commentInput.value.trim();
+
+            if (!commentText) {
+                alert('Please enter a note before submitting.');
+                return;
+            }
+
+            // Create new comment element
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            const timeStr = now.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
+
+            const newComment = document.createElement('div');
+            newComment.className = 'comment fade-in';
+            newComment.innerHTML = `
+                <div class="comment-date">${dateStr} - ${timeStr}</div>
+                <div class="comment-text">${commentText}</div>
+            `;
+
+            // Insert at the top of previous comments
+            const previousComments = document.querySelector('.previous-comments');
+            const firstComment = previousComments.querySelector('.comment');
+            if (firstComment) {
+                previousComments.insertBefore(newComment, firstComment.nextSibling);
+            } else {
+                previousComments.appendChild(newComment);
+            }
+
+            // Clear input
+            commentInput.value = '';
+
+            // Show success message
+            showNotification('Note saved successfully! Your care team will review it soon.');
+
+            // In a real app, this would save to backend
+            // saveCommentToBackend(commentText);
+        }
+
+        // Show notification
+        function showNotification(message) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                bottom: 100px;
+                right: 30px;
+                background: #10b981;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                animation: slideIn 0.3s ease;
+                z-index: 1000;
+            `;
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Emergency contact
+        function callEmergency() {
+            if (confirm('This will call the emergency contact number. Continue?')) {
+                window.location.href = 'tel:555-123-4567';
+            }
+        }
+
+        // Open help/chat
+        function openHelp() {
+            alert('💬 Live Chat Feature\n\nThis would open a chat with your care team or AI assistant.\n\nFor demo purposes, try the main care assistant page for AI chat functionality!');
+        }
+
+        // Simulate real-time updates
+        function simulateRealtimeUpdates() {
+            // Update steps count randomly
+            setInterval(() => {
+                const stepsElement = document.querySelector('.stat-number');
+                const currentSteps = parseInt(stepsElement.textContent);
+                if (currentSteps < 1000 && Math.random() > 0.7) {
+                    stepsElement.textContent = currentSteps + Math.floor(Math.random() * 10);
+                }
+            }, 5000);
+        }
+
+        // Initialize on load
+        window.addEventListener('load', function() {
+            updateProgress();
+            simulateRealtimeUpdates();
+            
+            // Add smooth scroll behavior
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            });
+        });
+
+        // Add animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; transform: translateY(20px); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
+                
+               
+
+    <script>
+        let isRecording = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let currentSessionId = 'demo-session-' + Date.now();
+
+        // File upload handling
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const loading = document.getElementById('upload-loading');
+            const carePlan = document.getElementById('care-plan');
+            const successMessage = document.getElementById('success-message');
+
+            loading.classList.add('show');
+            carePlan.classList.remove('show');
+            successMessage.classList.remove('show');
+
+            // Simulate processing
+            setTimeout(() => {
+                generateMockCarePlan();
+                loading.classList.remove('show');
+                carePlan.classList.add('show');
+                successMessage.classList.add('show');
+
+                // Auto-hide success message
+                setTimeout(() => {
+                    successMessage.classList.remove('show');
+                }, 3000);
+            }, 2500);
+        }
+
+        // Process manual text input
+        function processDocumentText() {
+            const documentText = document.getElementById('document-text').value.trim();
+            if (!documentText) {
+                alert('Please enter some discharge instructions first!');
+                return;
+            }
+
+            const loading = document.getElementById('upload-loading');
+            const carePlan = document.getElementById('care-plan');
+            const successMessage = document.getElementById('success-message');
+
+            loading.classList.add('show');
+            carePlan.classList.remove('show');
+            successMessage.classList.remove('show');
+
+            // In real app, this would call your backend:
+            // fetch('/process-document', {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify({ document_text: documentText })
+            // })
+
+            setTimeout(() => {
+                generateSmartCarePlan(documentText);
+                loading.classList.remove('show');
+                carePlan.classList.add('show');
+                successMessage.classList.add('show');
+
+                setTimeout(() => {
+                    successMessage.classList.remove('show');
+                }, 3000);
+            }, 2500);
+        }
+
+        function generateSmartCarePlan(documentText) {
+            // Create a more intelligent mock based on input text
+            const carePlanContent = document.getElementById('care-plan-content');
+
+            // Simple keyword detection for smarter demo
+            const hasPainMeds = documentText.toLowerCase().includes('ibuprofen') || documentText.toLowerCase().includes('pain');
+            const hasAntibiotics = documentText.toLowerCase().includes('antibiotic') || documentText.toLowerCase().includes('amoxicillin');
+            const hasWalkingInstructions = documentText.toLowerCase().includes('walk') || documentText.toLowerCase().includes('activity');
+            const hasSurgery = documentText.toLowerCase().includes('surgery') || documentText.toLowerCase().includes('operation');
+
+            let medicationSection = '';
+            if (hasPainMeds) {
+                medicationSection += '<div class="care-item">Pain medication (Ibuprofen 400mg) - Every 6 hours with food</div>';
+            }
+            if (hasAntibiotics) {
+                medicationSection += '<div class="care-item">Antibiotic (Amoxicillin 500mg) - 3 times daily for 7 days</div>';
+            }
+            if (!hasPainMeds && !hasAntibiotics) {
+                medicationSection = '<div class="care-item">Follow medication schedule as prescribed by your doctor</div>';
+            }
+
+            carePlanContent.innerHTML = `
+                <div class="care-section">
+                    <h3>💊 Medication Schedule</h3>
+                    ${medicationSection}
+                    <div class="care-item">Take all medications with food unless otherwise directed</div>
+                </div>
+
+                <div class="care-section">
+                    <h3>🚶 Activity Guidelines</h3>
+                    ${hasWalkingInstructions ?
+                        '<div class="care-item">Short walks (5-10 minutes) every 2 hours while awake</div>' :
+                        '<div class="care-item">Light activity as tolerated, avoid strenuous exercise</div>'
+                    }
+                    <div class="care-item">No lifting over 10 pounds for 2 weeks</div>
+                    <div class="care-item">Deep breathing exercises 3 times daily</div>
+                </div>
+
+                <div class="care-section">
+                    <h3>🩹 Wound Care</h3>
+                    <div class="care-item">Change dressing daily or when wet/dirty</div>
+                    <div class="care-item">Keep incision dry for first 48 hours</div>
+                    <div class="care-item">Watch for signs of infection: redness, swelling, unusual discharge</div>
+                </div>
+
+                <div class="care-section">
+                    <h3>⚠️ When to Call Doctor</h3>
+                    <div class="care-item">Fever over 101°F (38.3°C)</div>
+                    <div class="care-item">Severe pain not controlled by medication</div>
+                    <div class="care-item">Signs of infection at incision site</div>
+                    <div class="care-item">Unusual bleeding or discharge</div>
+                </div>
+
+                <div class="care-section">
+                    <h3>📅 Follow-up Appointments</h3>
+                    <div class="care-item">Post-op check: 1 week from surgery date</div>
+                    <div class="care-item">Suture removal: 10-14 days post-surgery</div>
+                </div>
+            `;
+        }
+
+        function generateMockCarePlan() {
+            generateSmartCarePlan("General post-surgery care with pain management and activity restrictions");
+        }
+
+        // Text question handling
+        function askTextQuestion() {
+            const questionInput = document.getElementById('question-input');
+            const question = questionInput.value.trim();
+
+            if (!question) {
+                alert('Please enter a question first!');
+                return;
+            }
+
+            const voiceLoading = document.getElementById('voice-loading');
+            const chatResponse = document.getElementById('chat-response');
+
+            voiceLoading.classList.add('show');
+            chatResponse.classList.remove('show');
+
+            // Simulate processing
+            setTimeout(() => {
+                generateSmartResponse(question);
+                voiceLoading.classList.remove('show');
+                chatResponse.classList.add('show');
+                questionInput.value = ''; // Clear input
+            }, 1500);
+
+            // In real app:
+            // fetch('/ask-question', {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify({ question: question, session_id: currentSessionId })
+            // })
+        }
+
+        function generateSmartResponse(question) {
+            const responseContent = document.getElementById('ai-response-content');
+            const lowerQuestion = question.toLowerCase();
+
+            let response = '';
+
+            if (lowerQuestion.includes('pain') || lowerQuestion.includes('hurt')) {
+                response = "It's normal to experience some discomfort after surgery. Take your prescribed pain medication as directed - typically every 6 hours with food. If pain becomes severe or unmanageable, contact your healthcare provider immediately. Ice can also help reduce swelling and discomfort.";
+            } else if (lowerQuestion.includes('walk') || lowerQuestion.includes('exercise') || lowerQuestion.includes('activity')) {
+                response = "Light walking is encouraged and helps prevent blood clots. Start with short 5-10 minute walks every few hours. Avoid strenuous activities, heavy lifting (over 10 pounds), or intense exercise for at least 2 weeks. Listen to your body and rest when needed.";
+            } else if (lowerQuestion.includes('infection') || lowerQuestion.includes('wound') || lowerQuestion.includes('incision')) {
+                response = "Watch for signs of infection including increased redness, warmth, swelling, or unusual discharge from the incision site. Keep the wound clean and dry, change dressings as instructed. If you notice any concerning changes or develop a fever over 101°F, contact your doctor immediately.";
+            } else if (lowerQuestion.includes('medication') || lowerQuestion.includes('medicine')) {
+                response = "Take all medications exactly as prescribed, even if you start feeling better. Take pain medication and antibiotics with food to reduce stomach upset. Don't skip doses of antibiotics - complete the full course. If you experience side effects, contact your healthcare provider.";
+            } else if (lowerQuestion.includes('sleep') || lowerQuestion.includes('rest')) {
+                response = "Adequate rest is crucial for healing. You may need to sleep in a slightly elevated position for comfort. It's normal to feel more tired than usual - this is your body's way of healing. Take naps as needed and aim for 7-8 hours of sleep per night.";
+            } else {
+                response = "That's a great question about your recovery. Based on your individual situation, I recommend following your discharge instructions closely and contacting your healthcare provider if you have specific concerns. Remember, every recovery is different, and it's always best to err on the side of caution with your health.";
+            }
+
+            responseContent.textContent = response;
+        }
+
+        // Voice recording handling
+        async function toggleRecording() {
+            const recordBtn = document.getElementById('record-btn');
+            const recordStatus = document.getElementById('record-status');
+            const voiceLoading = document.getElementById('voice-loading');
+            const chatResponse = document.getElementById('chat-response');
+
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = (event) => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        processVoiceQuestion(audioBlob);
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    recordBtn.classList.add('recording');
+                    recordBtn.textContent = '⏹️';
+                    recordStatus.textContent = 'Recording... Click to stop';
+                } catch (error) {
+                    alert('Could not access microphone. Please check permissions or use the text input instead.');
+                }
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                recordBtn.classList.remove('recording');
+                recordBtn.textContent = '🎤';
+                recordStatus.textContent = 'Processing your question...';
+                voiceLoading.classList.add('show');
+                chatResponse.classList.remove('show');
+            }
+        }
+
+        function processVoiceQuestion(audioBlob) {
+            // Simulate voice processing
+            setTimeout(() => {
+                // Mock transcription and response
+                const mockQuestions = [
+                    "How much pain is normal after surgery?",
+                    "When can I start walking around more?",
+                    "What signs of infection should I watch for?",
+                    "Can I take my medication with food?",
+                    "How long until I feel better?"
+                ];
+
+                const randomQuestion = mockQuestions[Math.floor(Math.random() * mockQuestions.length)];
+                generateSmartResponse(randomQuestion);
+
+                document.getElementById('voice-loading').classList.remove('show');
+                document.getElementById('chat-response').classList.add('show');
+                document.getElementById('record-status').textContent = 'Click to ask another question';
+            }, 2000);
+
+            // In real app, this would upload audio to your backend
+        }
+
+        function openDashboard() {
+            alert('🎉 Dashboard Feature Coming Soon!\n\nThis would open your personalized dashboard with:\n\n📱 Medication reminders\n📊 Progress tracking\n📅 Appointment schedule\n🚨 Emergency contacts\n📈 Recovery milestones\n\nFor now, you can see how the document processing and AI chat work!');
+        }
+
+        // Drag and drop functionality
+        const uploadArea = document.querySelector('.upload-area');
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('file-input').files = files;
+                handleFileUpload({ target: { files: files } });
+            }
+        });
+
+        // Allow Enter key to submit questions
+        document.getElementById('question-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                askTextQuestion();
+            }
+        });
+
+        // Demo tip on page load
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                console.log('💡 Demo Tip: Try pasting some discharge instructions in the text area to see the AI generate a personalized care plan!');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

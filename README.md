@@ -1,20 +1,32 @@
 # Heidi AI Integration Project
 
-This project demonstrates full integration with the [Heidi AI API](https://registrar.api.heidihealth.com/api/v2/ml-scribe/open-api) including authentication, session management, AI consultation, audio transcription, and consult note generation.
+This project demonstrates a comprehensive integration with the [Heidi AI API](https://registrar.api.heidihealth.com/api/v2/ml-scribe/open-api) for post-surgery care management, featuring document processing, AI-powered care plan generation, voice transcription, and interactive patient Q&A.
 
-**✨ Featured Demo: Post-Surgery Care Assistant** - Transform discharge instructions into personalized care plans with AI-powered Q&A support.
+**✨ Featured Demo: AI-Powered Post-Surgery Care Assistant** - Transform discharge instructions into personalized care plans with voice-enabled Q&A support and audio transcription capabilities.
 
-## 🧠 Features
+## 🧠 Core Features
 
-- **Token-based authentication (JWT)** - Secure API access
-- **Session creation, update, and retrieval** - Manage patient sessions
-- **Audio transcription workflow** - Convert speech to text
-- **Consult note generation using Heidi templates** - Generate medical notes
-- **Ask Heidi AI Assistant (streamed response)** - Real-time AI responses
-- **Interactive Care Plan Demo** - Document processing to structured care plans
-- **Medical Q&A Chat** - Patient question answering system
+### Backend API Integration
+- **JWT Authentication** - Secure token-based API access
+- **Session Management** - Create, update, and retrieve patient sessions
+- **Server-Sent Events (SSE) Parsing** - Real-time AI response streaming
+- **Audio Transcription Workflow** - Convert speech to text with full workflow support
+- **AI Chat Integration** - Powered by Heidi's medical AI with enhanced error handling
 
-## 🚀 Quick Start - Running the Demo
+### Interactive Demo Application
+- **Document Processing** - Upload discharge papers or paste text for AI analysis
+- **Care Plan Generation** - AI creates structured, personalized recovery plans
+- **Voice Questions** - Record audio questions or upload audio files
+- **Text Chat** - Type questions for instant AI medical guidance
+- **Beautiful UI** - Professional, responsive design optimized for healthcare
+
+### Advanced Features
+- **Multiple Input Methods** - Text, voice recording, and file upload
+- **Smart Response Formatting** - Structured care plans with medication schedules, activity guidelines, wound care, and warning signs
+- **Error Recovery** - Comprehensive error handling with fallback strategies
+- **Real-time Processing** - Live audio transcription and AI response generation
+
+## 🚀 Quick Start
 
 ### Prerequisites
 - Python 3.8+
@@ -64,18 +76,29 @@ python3 run.py
 ### 5. Access the Demo
 Open your browser and visit:
 - **Main Demo**: http://localhost:5000/demo
-- **API Test**: http://localhost:5000/test-jwt
-- **Session Test**: http://localhost:5000/test-session
+- **API Health Check**: http://localhost:5000/health
+- **Environment Check**: http://localhost:5000/env-check
 
-## 🎯 Demo Usage
+## 🎯 Demo Usage Guide
 
-### Document Processing to Care Plan
+### 1. Document Processing to Care Plan
 1. **Visit**: http://localhost:5000/demo
-2. **Paste discharge instructions** in the text area (or use one of the examples below)
+2. **Input Options**:
+   - Upload discharge papers (PDF, JPG, PNG)
+   - Paste discharge instructions in the text area
+   - Use provided examples for testing
 3. **Click "Generate Care Plan"** → Watch AI create structured care plan
-4. **Ask questions** in the chat section → Get medical guidance
+4. **Review Results** → Get organized medication schedules, activity guidelines, wound care instructions
 
-### Sample Discharge Instructions for Testing
+### 2. Voice & Audio Questions
+1. **Record Live**: Click microphone button to record questions
+2. **Upload Audio**: Drag and drop audio files (MP3, WAV, M4A, AAC)
+3. **Type Questions**: Use text input for quick queries
+4. **Get AI Responses**: Receive medical guidance powered by Heidi AI
+
+### Sample Test Data
+
+#### Discharge Instructions Examples
 ```
 Patient discharged after knee surgery. Take Ibuprofen 400mg every 6 hours with food.
 Take Amoxicillin 500mg three times daily for 7 days. Short walks recommended every 2 hours.
@@ -83,22 +106,22 @@ No lifting over 10 pounds for 2 weeks. Follow-up appointment in 1 week.
 Watch for fever over 101°F, redness, or unusual swelling around incision site.
 ```
 
-**More examples**:
-- **Appendectomy**: Laparoscopic procedure with Acetaminophen, lifting restrictions
-- **Hip Replacement**: Physical therapy, walker use, blood thinners
-- **Gallbladder Surgery**: Dietary restrictions, wound care, activity levels
-- **Cataract Surgery**: Eye drops, protective shield, activity restrictions
+**Additional Test Cases**:
+- **Appendectomy**: Post-laparoscopic care with dietary restrictions
+- **Hip Replacement**: Physical therapy protocols and mobility aids
+- **Gallbladder Surgery**: Post-surgical diet and activity modifications
+- **Cataract Surgery**: Eye care and vision protection guidelines
 
-### Question Examples
-Try asking these questions in the chat:
+#### Question Examples
 - "How much pain is normal after surgery?"
 - "When can I start walking more?"
 - "What signs of infection should I watch for?"
 - "Can I take my medication with food?"
+- "How long does recovery typically take?"
 
-## 📁 Project Structure
+## 📁 Project Architecture
 
-```text
+```
 heidi-ai-integration/
 ├── .env.example                 # Sample environment configuration
 ├── .env                         # Local overrides (not committed)
@@ -109,159 +132,213 @@ heidi-ai-integration/
 ├── config.py                     # Configuration settings
 │
 ├── app/                          # Main application package
-│   ├── __init__.py              # App factory
-│   ├── api/                     # Heidi API integration
-│   │   ├── auth.py              # JWT authentication
-│   │   ├── session.py           # Session management
-│   │   ├── ask_heidi.py         # AI chat functionality (SSE parsing)
-│   │   ├── transcript.py        # Audio transcription
-│   │   └── consult.py           # Consult note generation
+│   ├── __init__.py              # App factory with blueprint registration
+│   │
+│   ├── api/                     # Heidi API integration layer
+│   │   ├── __init__.py          # API base configuration
+│   │   ├── auth.py              # JWT authentication handler
+│   │   ├── session.py           # Session lifecycle management
+│   │   ├── ask_heidi.py         # AI chat with SSE parsing
+│   │   ├── transcript.py        # Audio transcription workflow
+│   │   └── consult.py           # Medical consultation features
 │   │
 │   ├── routes/                  # Flask route handlers
-│   │   ├── demo.py              # Main demo endpoints
-│   │   ├── auth.py              # Authentication routes
+│   │   ├── __init__.py          # Routes package initialization
+│   │   ├── auth.py              # Authentication endpoints
 │   │   ├── session.py           # Session management routes
-│   │   └── transcript.py        # Transcription routes
+│   │   ├── ask_heidi.py         # AI interaction endpoints
+│   │   ├── transcript.py        # Audio processing routes
+│   │   ├── consult.py           # Medical consultation routes
+│   │   ├── demo.py              # Main demo application
+│   │   └── document.py          # Document processing routes
 │   │
 │   ├── templates/               # HTML templates
 │   │   └── demo.html            # Interactive demo interface
 │   │
-│   └── storage.py               # In-memory data storage
+│   └── storage.py               # In-memory data storage (demo)
 │
-└── tests/                       # Test scripts
-    ├── sse_parser_test.py       # Complete API flow test
-    ├── debug_tests.py           # API debugging tools
-    └── test_api.py              # Basic API tests
+├── tests/                       # Comprehensive test suite
+│   ├── sse_parser_test.py       # Complete API workflow validation
+│   ├── debug_hedi_api.py        # API debugging and diagnostics
+│   ├── test_audio_feature.py    # Audio transcription testing
+│   ├── complete_test.py         # End-to-end integration test
+│   └── test_api.py              # Basic API connectivity test
+│
+└── html/                        # Additional frontend demos
+    ├── user_dashboard.html       # Patient dashboard mockup
+    ├── community_frontend.html   # Community care interface
+    └── hospital_frontend.html    # Hospital staff interface
 ```
 
 ## 🔧 API Endpoints
 
-### Demo Endpoints
+### Demo Application
 - `GET /demo` - Interactive care plan demo
 - `POST /process-document` - Convert discharge instructions to care plan
-- `POST /ask-question` - Medical Q&A chat
+- `POST /ask-question` - Medical Q&A chat interface
+- `POST /transcribe-audio` - Audio file transcription
 
-### Testing Endpoints
-- `GET /test-jwt` - Verify JWT authentication
-- `GET /test-session` - Test session creation
-- `GET /get-token` - Get raw JWT token
+### System Health & Debugging
+- `GET /health` - Application health check
+- `GET /env-check` - Environment variables validation
+- `GET /test-jwt` - JWT authentication test
+- `GET /test-session` - Session creation test
+- `POST /test-complete-flow` - End-to-end workflow test
 
-### Heidi API Integration
+### Core API Integration
 - `POST /ask_heidi` - Direct AI assistant access
-- `POST /consult/generate` - Generate consult notes
-- `POST /transcript/upload` - Audio transcription
-- `GET /consult/templates` - Available note templates
+- `POST /ask_heidi_enhanced` - AI with fallback strategies
+- `POST /consult/generate` - Generate medical consultation notes
+- `GET /consult/templates` - Available consultation templates
+- `POST /transcript/upload` - Audio file processing
 
-## 🧪 Testing
+## 🧪 Testing & Validation
 
-### Run Complete API Test
+### Run Complete Integration Test
 ```bash
 python3 tests/sse_parser_test.py
 ```
-**Expected output**: JWT ✅ → Session ✅ → Care Plan ✅ → Q&A ✅
+**Expected Flow**: JWT ✅ → Session ✅ → Care Plan ✅ → Q&A ✅
 
 ### Debug API Issues
 ```bash
-python3 tests/debug_tests.py
+python3 tests/debug_hedi_api.py
 ```
 
-### Test Individual Components
+### Test Audio Features
 ```bash
-# Test authentication only
+python3 tests/test_audio_feature.py
+```
+
+### Validate Individual Components
+```bash
+# Test authentication
 python3 tests/test_api.py
 
-# Test with debugging
-python3 tests/debug_response.py
+# Test complete workflow
+python3 tests/complete_test.py
 ```
 
-## 🏥 Demo Features Showcase
+## 🎨 Frontend Features
 
-### 1. Document Intelligence
-- **Input**: Raw discharge instructions (text)
-- **Processing**: Heidi AI analysis with medical knowledge
-- **Output**: Structured care plan with sections:
-  - 💊 Medication schedules with timing
-  - 🚶 Activity guidelines and restrictions
-  - 🩹 Wound care instructions
-  - ⚠️ Warning signs to monitor
-  - 📅 Follow-up appointment reminders
+### Professional UI Design
+- **Responsive Layout** - Works seamlessly on desktop and mobile
+- **Loading Animations** - Progress indicators for all async operations
+- **Error Handling** - User-friendly error messages with recovery suggestions
+- **Accessibility** - Proper contrast ratios and semantic markup
 
-### 2. Medical Q&A Chat
-- **Smart responses** to common post-surgery questions
-- **Context-aware** advice based on procedure type
-- **Safety-focused** with healthcare provider referrals
-- **Real-time processing** with Server-Sent Events (SSE)
+### Interactive Elements
+- **Drag & Drop** - File upload with visual feedback
+- **Voice Recording** - Real-time audio capture with visual indicators
+- **Progress Tracking** - Visual progress bars for multi-step processes
+- **Dynamic Content** - Real-time updates without page refresh
 
-### 3. Professional UI
-- **Responsive design** works on mobile and desktop
-- **Loading animations** and progress indicators
-- **Error handling** with user-friendly messages
-- **Accessibility features** for healthcare settings
+### Care Plan Visualization
+- **Structured Sections** - Organized medication, activity, and care instructions
+- **Color-Coded Categories** - Visual differentiation of care plan sections
+- **Responsive Cards** - Hover effects and smooth transitions
+- **Mobile-Optimized** - Touch-friendly interface for mobile devices
 
 ## 🔍 Troubleshooting
 
-### Common Issues
+### Common Issues & Solutions
 
-**"Template Error: demo.html"**
+**Demo Page Not Loading**
 ```bash
-# Make sure templates directory exists
-mkdir -p app/templates
-# Copy demo.html to app/templates/demo.html
+# Ensure templates directory exists
+ls app/templates/demo.html
+
+# If missing, check file path and permissions
 ```
 
-**"JWT Failed" or Authentication Errors**
+**Authentication Failures**
 ```bash
-# Verify your .env file has correct credentials
-cat .env
-# Test credentials directly
-python3 tests/debug_tests.py
+# Verify environment variables
+python3 tests/debug_hedi_api.py
+
+# Check API credentials are current and valid
 ```
 
-**"Session Creation Failed"**
+**Audio Transcription Issues**
 ```bash
-# Test session endpoint
+# Test audio workflow
+python3 tests/test_audio_feature.py
+
+# Verify supported file formats: MP3, WAV, M4A, AAC
+```
+
+**Session Creation Problems**
+```bash
+# Test session endpoint directly
 curl -X GET http://localhost:5000/test-session
 ```
 
-**Import Errors**
+### Environment Setup Verification
 ```bash
-# Install missing dependencies
-pip3 install flask python-dotenv requests
-```
-
-### Environment Variables Required
-```bash
+# Required environment variables
 HEIDI_API_KEY=your_actual_api_key
 HEIDI_EMAIL=your_registered_email
 HEIDI_USER_ID=your_user_identifier
 ```
 
-## 🎉 Demo Success Indicators
+### Performance Optimization
+- Audio files are limited to 10MB for optimal processing
+- Sessions automatically handle JWT token refresh
+- SSE parsing ensures efficient real-time communication
+- Error recovery mechanisms prevent cascading failures
 
-When everything is working correctly, you should see:
+## 🎉 Success Indicators
 
-1. **Demo loads** at http://localhost:5000/demo with professional UI
+When everything is working correctly:
+
+1. **Demo loads** at http://localhost:5000/demo with professional healthcare UI
 2. **Document processing** generates real AI care plans (not mock data)
-3. **Questions return** detailed medical guidance from Heidi AI
-4. **No console errors** in browser developer tools
-5. **API tests pass** with "🎉 SUCCESS!" messages
+3. **Voice questions** return detailed medical guidance from Heidi AI
+4. **Audio transcription** converts speech to text accurately
+5. **No console errors** in browser developer tools
+6. **API tests pass** with "🎉 SUCCESS!" messages in terminal
 
 ## 🚀 Production Considerations
 
-For production deployment:
-- Replace in-memory storage with database (PostgreSQL/MySQL)
-- Implement proper user authentication and sessions
+For deployment to production environments:
+
+### Infrastructure
+- Replace in-memory storage with persistent database (PostgreSQL/MySQL)
+- Implement Redis for session management and caching
+- Set up proper logging and monitoring (ELK stack or similar)
+- Configure environment-specific settings with proper secrets management
+
+### Security
+- Implement proper user authentication and authorization
 - Add rate limiting and API quotas
-- Set up proper logging and monitoring
-- Use environment-specific configuration
-- Implement proper error tracking
+- Set up HTTPS/TLS encryption
+- Implement proper error tracking without exposing sensitive information
 
-## 📞 Support
+### Scalability
+- Containerize with Docker for consistent deployments
+- Set up load balancing for multiple instances
+- Implement async processing for audio transcription
+- Add CDN for static assets and improved performance
 
-- **API Issues**: Check Heidi AI documentation
-- **Setup Problems**: Verify all dependencies installed
-- **Demo Not Working**: Run test scripts first
-- **Need Features**: Check existing routes and endpoints
+## 📞 Support & Development
+
+### API Documentation
+- **Heidi AI API**: Check official documentation for endpoint specifications
+- **Audio Formats**: Supports MP3, WAV, M4A, AAC up to 10MB
+- **Response Format**: Server-Sent Events (SSE) for real-time streaming
+
+### Development Tips
+- Use `python3 tests/debug_hedi_api.py` for comprehensive API debugging
+- Monitor browser console for frontend JavaScript errors
+- Check Flask logs for backend API communication issues
+- Test with sample data before using real patient information
+
+### Feature Requests
+The codebase is designed for extensibility:
+- Additional medical specialties can be added to the AI prompts
+- More file formats can be supported with minimal changes
+- Dashboard features are already prototyped in the html/ directory
+- Integration with other healthcare APIs is straightforward
 
 ---
 

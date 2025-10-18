@@ -263,40 +263,145 @@
             border-left-color: #10b981;
         }
 
-        .text-question-area {
-            margin-top: 15px;
-            padding: 15px;
+        /* Enhanced Question Section Styling */
+        .question-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .question-method {
             background: white;
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .question-method:hover {
+            border-color: #10b981;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .question-method.active {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .method-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .method-icon {
+            font-size: 1.5rem;
         }
 
         .text-question-area input {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             border: 1px solid #d1d5db;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 0.95rem;
+            margin-bottom: 10px;
+        }
+
+        /* Audio Recording Styles */
+        .audio-recording-area {
+            text-align: center;
+        }
+
+        .record-button {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 20px;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .record-button:hover {
+            background: #dc2626;
+            transform: scale(1.05);
+        }
+
+        .record-button.recording {
+            background: #10b981;
+            animation: pulse 1.5s infinite;
+        }
+
+        .record-button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+            50% { transform: scale(1.1); box-shadow: 0 4px 25px rgba(16, 185, 129, 0.5); }
+            100% { transform: scale(1); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+        }
+
+        .recording-status {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 10px;
+            min-height: 20px;
+        }
+
+        .recording-status.recording {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .audio-upload-area {
+            border: 2px dashed #10b981;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .audio-upload-area:hover {
+            background: #f0fdf4;
+            border-color: #059669;
         }
 
         .ask-btn {
             background: #10b981;
             color: white;
             border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
+            padding: 10px 20px;
+            border-radius: 8px;
             cursor: pointer;
-            margin-top: 8px;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            width: 100%;
         }
 
         .ask-btn:hover {
             background: #059669;
+            transform: translateY(-1px);
         }
 
         .ask-btn:disabled {
             background: #94a3b8;
             cursor: not-allowed;
+            transform: none;
         }
 
         .chat-response {
@@ -339,6 +444,20 @@
 
         .success-message.show {
             display: block;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .question-methods {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .record-button {
+                width: 60px;
+                height: 60px;
+                font-size: 1.2rem;
+            }
         }
     </style>
 </head>
@@ -387,15 +506,44 @@
                 </div>
             </div>
 
-            <!-- Step 2: Voice Chat -->
+            <!-- Step 2: Enhanced Voice Chat with Audio Support -->
             <div class="step voice-section">
                 <h2>💬 Step 2: Ask Questions About Your Recovery</h2>
+                <p style="margin-bottom: 20px; color: #64748b;">Choose how you'd like to ask your question - type it out or record your voice!</p>
 
-                <!-- Text question area -->
-                <div class="text-question-area">
-                    <h4 style="margin-bottom: 10px;">Type your question:</h4>
-                    <input type="text" id="question-input" placeholder="Ask about pain levels, activity restrictions, medication side effects, etc.">
-                    <button class="ask-btn" onclick="askTextQuestion()" id="ask-btn">Ask Heidi AI</button>
+                <div class="question-methods">
+                    <!-- Text Questions -->
+                    <div class="question-method" id="text-method">
+                        <div class="method-header">
+                            <span class="method-icon">⌨️</span>
+                            Type Your Question
+                        </div>
+                        <div class="text-question-area">
+                            <input type="text" id="question-input" placeholder="Ask about pain levels, activity restrictions, medication side effects, etc.">
+                            <button class="ask-btn" onclick="askTextQuestion()" id="ask-btn">Ask Heidi AI</button>
+                        </div>
+                    </div>
+
+                    <!-- Audio Questions -->
+                    <div class="question-method" id="audio-method">
+                        <div class="method-header">
+                            <span class="method-icon">🎤</span>
+                            Record Your Question
+                        </div>
+                        <div class="audio-recording-area">
+                            <div class="recording-status" id="recording-status">Click to start recording</div>
+                            <button class="record-button" id="record-button" onclick="toggleRecording()">🎤</button>
+                            <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 15px;">
+                                Or upload an audio file:
+                            </div>
+                            <div class="audio-upload-area" onclick="document.getElementById('audio-file-input').click()">
+                                <div style="font-size: 0.9rem;">📎 Click to upload audio file</div>
+                                <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 5px;">MP3, WAV, M4A supported</div>
+                            </div>
+                            <input type="file" id="audio-file-input" accept=".mp3,.wav,.m4a,.aac" style="display: none;" onchange="handleAudioUpload(event)">
+                            <button class="ask-btn" onclick="processAudioQuestion()" id="audio-ask-btn" disabled>Ask with Audio</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="chat-response" id="chat-response">
@@ -405,7 +553,7 @@
 
                 <div class="loading" id="voice-loading">
                     <div class="spinner"></div>
-                    <p>Processing your question...</p>
+                    <p id="loading-text">Processing your question...</p>
                 </div>
 
                 <div class="error-message" id="question-error-message">
@@ -425,6 +573,10 @@
     <script>
         // Global variables
         let currentSessionId = null;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let isRecording = false;
+        let currentAudioFile = null;
 
         // Utility functions
         function showElement(elementId) {
@@ -609,61 +761,261 @@
             `;
         }
 
+        // Audio Recording Functions
+        async function toggleRecording() {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                await startRecording();
+            }
+        }
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                mediaRecorder = new MediaRecorder(stream);
+                recordedChunks = [];
+
+                mediaRecorder.ondataavailable = function(event) {
+                    if (event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = function() {
+                    const blob = new Blob(recordedChunks, { type: 'audio/wav' });
+                    currentAudioFile = new File([blob], 'recorded_question.wav', { type: 'audio/wav' });
+
+                    document.getElementById('audio-ask-btn').disabled = false;
+                    document.getElementById('recording-status').textContent = 'Recording saved! Click "Ask with Audio" to send.';
+                    document.getElementById('recording-status').classList.remove('recording');
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+
+                // Update UI
+                const recordButton = document.getElementById('record-button');
+                const recordingStatus = document.getElementById('recording-status');
+
+                recordButton.classList.add('recording');
+                recordButton.textContent = '⏹️';
+                recordingStatus.textContent = 'Recording... Click to stop';
+                recordingStatus.classList.add('recording');
+
+            } catch (error) {
+                console.error('Error accessing microphone:', error);
+                showError('Could not access microphone. Please check permissions.', 'question-error-message');
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+
+                // Stop all tracks to release the microphone
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+
+                // Update UI
+                const recordButton = document.getElementById('record-button');
+                recordButton.classList.remove('recording');
+                recordButton.textContent = '🎤';
+            }
+        }
+
+        function handleAudioUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            const validTypes = ['audio/mp3', 'audio/wav', 'audio/m4a', 'audio/aac', 'audio/mpeg'];
+            if (!validTypes.includes(file.type)) {
+                showError('Please upload a valid audio file (MP3, WAV, M4A, AAC)', 'question-error-message');
+                return;
+            }
+
+            // Validate file size (max 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                showError('Audio file too large. Please upload a file smaller than 10MB.', 'question-error-message');
+                return;
+            }
+
+            currentAudioFile = file;
+            document.getElementById('audio-ask-btn').disabled = false;
+            document.getElementById('recording-status').textContent = `Audio file "${file.name}" ready to send!`;
+            hideElement('question-error-message');
+        }
+
+        async function processAudioQuestion() {
+            if (!currentAudioFile) {
+                showError('No audio file selected', 'question-error-message');
+                return;
+            }
+
+            hideElement('question-error-message');
+            showElement('voice-loading');
+            hideElement('chat-response');
+
+            // Update loading text
+            document.getElementById('loading-text').textContent = 'Transcribing audio and processing question...';
+
+            // Disable button
+            const audioAskBtn = document.getElementById('audio-ask-btn');
+            audioAskBtn.disabled = true;
+            audioAskBtn.textContent = 'Processing...';
+
+            try {
+                // Step 1: Upload audio and get transcription
+                const transcriptionResult = await uploadAudioAndTranscribe(currentAudioFile);
+
+                if (!transcriptionResult.success) {
+                    throw new Error(transcriptionResult.error || 'Transcription failed');
+                }
+
+                const transcribedText = transcriptionResult.transcript;
+                console.log('Transcribed text:', transcribedText);
+
+                // Step 2: Send transcribed text to AI for answering
+                const response = await fetch('/ask-question', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        question: transcribedText,
+                        session_id: currentSessionId
+                    })
+                });
+
+                const data = await response.json();
+                hideElement('voice-loading');
+
+                if (data.success) {
+                    currentSessionId = data.session_id;
+
+                    const aiResponse = data.response || 'No response received';
+                    document.getElementById('ai-response-content').innerHTML = `
+                        <div style="margin-bottom: 15px; padding: 10px; background: rgba(79, 172, 254, 0.1); border-radius: 6px;">
+                            <strong>🎤 Your question:</strong> "${transcribedText}"
+                        </div>
+                        <div style="white-space: pre-wrap; font-family: inherit; line-height: 1.6; background: rgba(255,255,255,0.5); padding: 15px; border-radius: 8px;">
+                            ${aiResponse}
+                        </div>
+                    `;
+
+                    showElement('chat-response');
+
+                    // Reset audio UI
+                    resetAudioUI();
+
+                } else {
+                    const errorMsg = data.error || 'Failed to get response';
+                    showError(errorMsg, 'question-error-message');
+                }
+
+            } catch (error) {
+                console.error('Audio processing error:', error);
+                hideElement('voice-loading');
+                showError('Audio processing failed: ' + error.message, 'question-error-message');
+            } finally {
+                // Re-enable button
+                audioAskBtn.disabled = false;
+                audioAskBtn.textContent = 'Ask with Audio';
+            }
+        }
+
+        async function uploadAudioAndTranscribe(audioFile) {
+            try {
+                // Create form data for audio upload
+                const formData = new FormData();
+                formData.append('audio_file', audioFile);
+                formData.append('session_id', currentSessionId);
+
+                // Upload audio and get transcription
+                const response = await fetch('/transcribe-audio', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                return result;
+
+            } catch (error) {
+                console.error('Transcription error:', error);
+                return {
+                    success: false,
+                    error: 'Failed to transcribe audio: ' + error.message
+                };
+            }
+        }
+
+        function resetAudioUI() {
+            currentAudioFile = null;
+            document.getElementById('audio-ask-btn').disabled = true;
+            document.getElementById('recording-status').textContent = 'Click to start recording';
+            document.getElementById('recording-status').classList.remove('recording');
+            document.getElementById('audio-file-input').value = '';
+
+            // Reset record button
+            const recordButton = document.getElementById('record-button');
+            recordButton.classList.remove('recording');
+            recordButton.textContent = '🎤';
+        }
+
         function handleFileUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+            const file = event.target.files[0];
+            if (!file) return;
 
-    hideAllMessages();
-    showElement('upload-loading');
-    hideElement('care-plan');
+            hideAllMessages();
+            showElement('upload-loading');
+            hideElement('care-plan');
 
-    const processBtn = document.getElementById('process-btn');
-    if (processBtn) {
-        processBtn.disabled = true;
-        processBtn.textContent = 'Uploading...';
-    }
+            const processBtn = document.getElementById('process-btn');
+            if (processBtn) {
+                processBtn.disabled = true;
+                processBtn.textContent = 'Uploading...';
+            }
 
-    const formData = new FormData();
-    formData.append('file', file);
+            const formData = new FormData();
+            formData.append('file', file);
 
-    fetch('/upload-document', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        hideElement('upload-loading');
+            fetch('/upload-document', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideElement('upload-loading');
 
-        if (data.error) {
-            showError(data.error);
-            return;
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+
+                // Populate textarea with extracted text from PDF/image
+                if (data.text) {
+                    const textarea = document.getElementById('document-text');
+                    textarea.value = data.text;
+
+                    showElement('success-message');
+                    setTimeout(() => {
+                        hideElement('success-message');
+                    }, 3000);
+                } else {
+                    showError('Failed to extract text from the uploaded document.');
+                }
+            })
+            .catch(error => {
+                hideElement('upload-loading');
+                showError('Upload failed: ' + error.message);
+            })
+            .finally(() => {
+                if (processBtn) {
+                    processBtn.disabled = false;
+                    processBtn.textContent = '📋 Generate Care Plan';
+                }
+            });
         }
-
-        // Populate textarea with extracted text from PDF/image
-        if (data.text) {
-            const textarea = document.getElementById('document-text');
-            textarea.value = data.text;
-
-            showElement('success-message');
-            setTimeout(() => {
-                hideElement('success-message');
-            }, 3000);
-        } else {
-            showError('Failed to extract text from the uploaded document.');
-        }
-    })
-    .catch(error => {
-        hideElement('upload-loading');
-        showError('Upload failed: ' + error.message);
-    })
-    .finally(() => {
-        if (processBtn) {
-            processBtn.disabled = false;
-            processBtn.textContent = '📋 Generate Care Plan';
-        }
-    });
-}
-
 
         // REAL API CALL - Document processing with formatting
         function processDocumentText() {
@@ -747,6 +1099,9 @@
             showElement('voice-loading');
             hideElement('chat-response');
 
+            // Update loading text
+            document.getElementById('loading-text').textContent = 'Processing your question...';
+
             // Disable button
             const askBtn = document.getElementById('ask-btn');
             if (askBtn) {
@@ -799,46 +1154,6 @@
             });
         }
 
-        function generateMockCarePlan() {
-            const mockCarePlan = `
-                <div class="care-section medication">
-                    <h3><span class="icon">💊</span> Medication Schedule</h3>
-                    <div class="care-item"><strong>Pain medication (Ibuprofen 400mg):</strong> Every 6 hours with food</div>
-                    <div class="care-item"><strong>Antibiotic (Amoxicillin 500mg):</strong> 3 times daily for 7 days</div>
-                    <div class="care-item"><strong>Anti-nausea medication:</strong> As needed</div>
-                </div>
-
-                <div class="care-section activity">
-                    <h3><span class="icon">🚶</span> Activity Guidelines</h3>
-                    <div class="care-item">Short walks (5-10 minutes) every 2 hours while awake</div>
-                    <div class="care-item">No lifting over 10 pounds for 2 weeks</div>
-                    <div class="care-item">Deep breathing exercises 3 times daily</div>
-                </div>
-
-                <div class="care-section wound-care">
-                    <h3><span class="icon">🩹</span> Wound Care</h3>
-                    <div class="care-item">Change dressing daily or when wet/dirty</div>
-                    <div class="care-item">Keep incision dry for first 48 hours</div>
-                    <div class="care-item">Watch for signs of infection: redness, swelling, unusual discharge</div>
-                </div>
-
-                <div class="care-section warning">
-                    <h3><span class="icon">⚠️</span> Warning Signs</h3>
-                    <div class="care-item">Fever over 101°F (38.3°C)</div>
-                    <div class="care-item">Severe pain not controlled by medication</div>
-                    <div class="care-item">Signs of infection at incision site</div>
-                </div>
-
-                <div class="care-section followup">
-                    <h3><span class="icon">📅</span> Follow-up Care</h3>
-                    <div class="care-item">Post-op check: 1 week from surgery date</div>
-                    <div class="care-item">Suture removal: 10-14 days post-surgery</div>
-                </div>
-            `;
-
-            document.getElementById('care-plan-content').innerHTML = mockCarePlan;
-        }
-
         function openDashboard() {
             alert('🎉 Dashboard Feature Coming Soon!\n\nThis would open your personalized dashboard with:\n\n📱 Medication reminders\n📊 Progress tracking\n📅 Appointment schedule\n🚨 Emergency contacts\n📈 Recovery milestones');
         }
@@ -852,7 +1167,7 @@
 
         // Auto-focus on page load
         window.addEventListener('load', function() {
-            console.log('💡 Demo Ready! Try pasting discharge instructions and asking questions.');
+            console.log('💡 Demo Ready! Try pasting discharge instructions and asking questions via text or audio.');
         });
     </script>
 </body>
