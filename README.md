@@ -60,13 +60,13 @@ Update `.env` with:
 ### 3. Run Tests
 ```bash
 # Execute the pytest suite (mocks Heidi API calls)
-pytest
+./venv/bin/pytest
 ```
 
 ### 4. Start the Demo
 ```bash
 # Start the Flask application
-python3 run.py
+./venv/bin/python run.py
 
 # Application will be available at: http://localhost:5000
 ```
@@ -115,6 +115,10 @@ heidi-ai-integration/
 │   │   ├── transcript.py        # Audio transcription workflow
 │   │   └── consult.py           # Medical consultation features
 │   │
+│   ├── services/                # Reusable business workflows
+│   │   ├── __init__.py
+│   │   └── demo_flows.py        # Orchestrates transcription, care-plan, QA demos
+│   │
 │   ├── routes/                  # Flask route handlers
 │   │   ├── __init__.py          # Routes package initialization
 │   │   ├── auth.py              # Authentication endpoints
@@ -122,7 +126,7 @@ heidi-ai-integration/
 │   │   ├── ask_heidi.py         # AI interaction endpoints
 │   │   ├── transcript.py        # Audio processing routes
 │   │   ├── consult.py           # Medical consultation routes
-│   │   ├── demo.py              # Main demo application
+│   │   ├── demo.py              # Thin wrappers around demo service flows
 │   │   └── document.py          # Document processing routes
 │   │
 │   ├── templates/               # HTML templates
@@ -154,12 +158,14 @@ heidi-ai-integration/
 | Health | `GET /health` | App heartbeat |
 | Environment | `GET /env-check` | Validate env vars |
 | Sessions | `POST /sessions`, `GET /sessions/<id>` | REST helpers for clinical sessions |
+| Debug | `GET /debug-api` | Environment/JWT/session self-check |
+| Complete Flow | `POST /test-complete-flow` | Smoke-test the end-to-end pipeline |
 
 ## 🧪 Testing
 
 Run the mocked suite:
 ```bash
-pytest
+./venv/bin/pytest
 ```
 
 Coverage highlights:
@@ -198,7 +204,13 @@ HEIDI_USER_ID=...
 - `/process-document` returns structured care plans
 - `/ask-question` streams coherent responses
 - `/transcribe-audio` returns transcript text
-- `pytest` passes locally
+```
+
+## 🏗️ Architecture Highlights
+- Modular blueprints expose production-ready REST endpoints (`app/routes`), while the demo blueprint delegates to service-layer workflows for quick UX testing.
+- `app/services/demo_flows.py` centralizes orchestration logic (JWT fetch, session setup, fallback Ask-AI calls, transcription) so routes stay thin and reusable in other contexts (CLI tools, jobs, etc.).
+- SSE parsing, JSON fallbacks, and error handling live in `app/api/ask_heidi.py` and are consumed directly by both services and routes.
+- Pytest suite relies on lightweight doubles and mocked Heidi responses to give fast feedback on the integration layer.
 
 ## 🚀 Production Considerations
 
@@ -224,4 +236,4 @@ HEIDI_USER_ID=...
 
 ---
 
-**Ready to demo?** Run `python3 run.py` and visit http://localhost:5000/demo 🏥✨
+**Ready to demo?** Run `./venv/bin/python run.py` and visit http://localhost:5000/demo 🏥✨

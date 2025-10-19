@@ -1,7 +1,7 @@
 # app/routes/ask_heidi.py - Fixed blueprint and imports
 from flask import Blueprint, request, jsonify
 from app.api.auth import get_jwt_token
-from app.api.ask_heidi import ask_ai_stream, test_ask_ai_with_fallbacks
+from app.api.ask_heidi import ask_ai_stream, ask_ai_with_fallbacks
 import traceback
 
 # Create the blueprint
@@ -60,7 +60,7 @@ def ask_heidi_enhanced():
             return jsonify({"error": "Missing required parameters: session_id, ai_command_text, content"}), 400
 
         # Use the enhanced version with fallbacks
-        response = test_ask_ai_with_fallbacks(jwt_token, session_id, ai_command_text, content)
+        response = ask_ai_with_fallbacks(jwt_token, session_id, ai_command_text, content)
 
         if response.get("error"):
             return jsonify(response), response.get("status_code", 500)

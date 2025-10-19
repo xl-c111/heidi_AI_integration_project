@@ -35,7 +35,7 @@
    - 401/404 and other HTTP errors produce descriptive error dictionaries with remediation hints.
 
 7. **Fallback Strategy**  
-   - `test_ask_ai_with_fallbacks` retries `ask_ai_stream` with content types `MARKDOWN`, `TEXT`, `PLAIN_TEXT` until success or exhaustion, surfacing the last error if all fail.
+   - `ask_ai_with_fallbacks` retries `ask_ai_stream` with content types `MARKDOWN`, `TEXT`, `PLAIN_TEXT` until success or exhaustion, surfacing the last error if all fail.
 
 8. **Buffered Parsing Utility**  
    - `parse_sse_response` remains available for legacy callers that receive the entire SSE body at once (useful in debugging scripts). It reuses `_extract_sse_chunk` for consistency.
