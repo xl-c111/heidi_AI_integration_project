@@ -117,7 +117,9 @@ heidi-ai-integration/
 │   │
 │   ├── services/                # Reusable business workflows
 │   │   ├── __init__.py
-│   │   └── demo_flows.py        # Orchestrates transcription, care-plan, QA demos
+│   │   ├── common.py            # Shared JWT/session helpers
+│   │   ├── demo_flows.py        # Orchestrates transcription, care-plan, QA demos
+│   │   └── transcription.py     # Transcription workflow helpers
 │   │
 │   ├── routes/                  # Flask route handlers
 │   │   ├── __init__.py          # Routes package initialization
@@ -126,7 +128,8 @@ heidi-ai-integration/
 │   │   ├── ask_heidi.py         # AI interaction endpoints
 │   │   ├── transcript.py        # Audio processing routes
 │   │   ├── consult.py           # Medical consultation routes
-│   │   ├── demo.py              # Thin wrappers around demo service flows
+│   │   ├── demo/                # Demo blueprint package
+│   │   │   └── __init__.py      # Thin wrappers around demo service flows
 │   │   └── document.py          # Document processing routes
 │   │
 │   ├── templates/               # HTML templates
