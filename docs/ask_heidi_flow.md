@@ -60,7 +60,7 @@ Exception handling:
 Return shape:
 Every successful branch includes `"success": True`, the parsed payload under `"response"`, and a `"format"` marker (`sse`, `json`, or `text`). Error branches include `"error": True` plus context.
 
-### `test_ask_ai_with_fallbacks(...)`
+### `ask_ai_with_fallbacks(...)`
 Utility designed for manual experiments rather than automated tests. It:
 1. Tries `ask_ai_stream` with content types `"MARKDOWN"`, `"TEXT"`, and `"PLAIN_TEXT"` in order.
 2. Returns immediately on success.
@@ -73,6 +73,6 @@ Utility designed for manual experiments rather than automated tests. It:
 4. SSE responses stream through `_consume_sse_stream`, which reuses `_extract_sse_chunk` for consistency with `parse_sse_response`.
 5. JSON and text responses are handled directly on the `requests.Response` object.
 6. Errors and exceptions are transformed into structured dictionaries so higher layers can react (e.g., showing messages in the UI).
-7. Alternative content types can be tested with the helper `test_ask_ai_with_fallbacks`.
+7. Alternative content types can be tested with the helper `ask_ai_with_fallbacks`.
 
 This structure keeps streaming and non-streaming formats unified while giving clear diagnostics when Heidi's API returns unexpected data.

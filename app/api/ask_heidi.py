@@ -218,7 +218,7 @@ def ask_ai_stream(jwt_token, session_id, ai_command_text, content, content_type=
         }
 
 
-def test_ask_ai_with_fallbacks(jwt_token, session_id, ai_command_text, content):
+def ask_ai_with_fallbacks(jwt_token, session_id, ai_command_text, content):
     """
     Test Ask AI with multiple content types as fallbacks
     """
