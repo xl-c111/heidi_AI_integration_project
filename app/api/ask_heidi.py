@@ -1,45 +1,77 @@
-# app/api/ask_heidi.py - ENHANCED with better error handling and debugging
-# Make sure this file replaces your existing app/api/ask_heidi.py
-import requests
 import json
+from typing import List
+import requests
 from app.api import BASE_URL
-import os
-import time
 
-def parse_sse_response(sse_text):
-    """Parse Server-Sent Events format and extract the actual content"""
-    print(f"=== PARSING SSE RESPONSE ===")
+
+def _extract_sse_chunk(raw_payload: str) -> str:
+    """Extract text content from an individual SSE data payload."""
+    try:
+        data_obj = json.loads(raw_payload)
+    except json.JSONDecodeError as exc:
+        print(f"  Failed to parse SSE chunk: {exc}")
+        return ""
+
+    if isinstance(data_obj, dict):
+        if isinstance(data_obj.get("data"), str):
+            print(f"  Parsed chunk: {data_obj['data'][:50]}...")
+            return data_obj["data"]
+        if isinstance(data_obj.get("content"), str):
+            print(f"  Parsed content: {data_obj['content'][:50]}...")
+            return data_obj["content"]
+    elif isinstance(data_obj, str):
+        print(f"  Parsed string chunk: {data_obj[:50]}...")
+        return data_obj
+
+    print(f"  Unknown data format: {data_obj}")
+    return ""
+
+
+def _consume_sse_stream(response: requests.Response) -> str:
+    """Iterate through the SSE stream and concatenate payloads."""
+    combined_chunks: List[str] = []
+    try:
+        for raw_line in response.iter_lines(decode_unicode=True):
+            if not raw_line:
+                continue
+            line = raw_line.strip()
+            # keep only lines with data: prefix
+            if not line.startswith("data:"):
+                continue
+            chunk = _extract_sse_chunk(line[5:].lstrip())
+            if chunk:
+                combined_chunks.append(chunk)
+    except (requests.exceptions.ChunkedEncodingError, json.JSONDecodeError) as exc:
+        print(f"Error while streaming SSE: {exc}")
+        return ""
+
+    return "".join(combined_chunks)
+
+
+def parse_sse_response(sse_text: str) -> str:
+    """Parse Server-Sent Events format and extract the actual content."""
+    print("=== PARSING SSE RESPONSE ===")
     print(f"Raw response length: {len(sse_text)}")
     print(f"First 200 chars: {sse_text[:200]}")
 
-    lines = sse_text.strip().split('\n')
+    lines = sse_text.strip().split("\n")
     combined_content = ""
     data_lines_found = 0
 
     for line in lines:
         line = line.strip()
-        if line.startswith('data: '):
+        if line.startswith("data:"):
             data_lines_found += 1
-            # Extract JSON from each data line
-            json_str = line[6:]  # Remove 'data: ' prefix
-            try:
-                data_obj = json.loads(json_str)
-                if 'data' in data_obj:
-                    combined_content += data_obj['data']
-                    print(f"  Parsed chunk: {data_obj['data'][:50]}...")
-                elif 'content' in data_obj:
-                    combined_content += data_obj['content']
-                    print(f"  Parsed content: {data_obj['content'][:50]}...")
-                else:
-                    print(f"  Unknown data format: {data_obj}")
-            except json.JSONDecodeError as e:
-                print(f"  Failed to parse line: {line} - Error: {e}")
-                continue
+            # take the raw JSON payload and extract only useful content field
+            chunk = _extract_sse_chunk(line[5:].lstrip())
+            if chunk:
+                combined_content += chunk
 
     print(f"Data lines found: {data_lines_found}")
     print(f"Combined content length: {len(combined_content)}")
 
     return combined_content.strip()
+
 
 def ask_ai_stream(jwt_token, session_id, ai_command_text, content, content_type="MARKDOWN"):
     """
@@ -68,90 +100,95 @@ def ask_ai_stream(jwt_token, session_id, ai_command_text, content, content_type=
 
     try:
         # Increase timeout for potentially slow AI responses
-        response = requests.post(url, headers=headers, json=payload, timeout=60)
+        with requests.post(
+            url,
+            headers=headers,
+            json=payload,
+            stream=True,
+            timeout=(10, 70),
+        ) as response:
 
-        print(f"Response status: {response.status_code}")
-        print(f"Response headers: {dict(response.headers)}")
-        print(f"Response length: {len(response.text)}")
+            print(f"Response status: {response.status_code}")
+            print(f"Response headers: {dict(response.headers)}")
 
-        if response.status_code == 200:
-            # Check content type header to determine parsing strategy
-            content_type_header = response.headers.get('content-type', '').lower()
-            print(f"Content-Type header: {content_type_header}")
+            if response.status_code == 200:
+                # Check content type header to determine parsing strategy
+                raw_content_type = ""
+                for header_key, header_value in response.headers.items():
+                    if header_key.lower() == "content-type":
+                        raw_content_type = header_value
+                        # stop looping once you found header
+                        break
 
-            if 'text/event-stream' in content_type_header or 'data:' in response.text:
-                print("Detected SSE format response")
-                # Parse SSE response
-                parsed_content = parse_sse_response(response.text)
-                if parsed_content:
-                    return {
-                        "success": True,
-                        "response": parsed_content,
-                        "format": "sse",
-                        "raw_length": len(response.text)
-                    }
-                else:
+                normalized_content_type = raw_content_type.lower()
+                print(f"Content-Type header: {raw_content_type}")
+
+                if 'text/event-stream' in normalized_content_type:
+                    print("Detected SSE format response")
+                    parsed_content = _consume_sse_stream(response)
+                    if parsed_content:
+                        return {
+                            "success": True,
+                            "response": parsed_content,
+                            "format": "sse",
+                        }
                     print("SSE parsing returned empty content")
                     return {
                         "error": True,
                         "message": "SSE response was empty after parsing",
-                        "raw_response": response.text[:500],
                         "status_code": response.status_code
                     }
 
-            elif 'application/json' in content_type_header:
-                print("Detected JSON format response")
-                # Try to parse as regular JSON
-                try:
-                    json_response = response.json()
-                    return {
-                        "success": True,
-                        "response": json_response,
-                        "format": "json"
-                    }
-                except json.JSONDecodeError as e:
-                    print(f"JSON parsing failed: {e}")
-                    # Fallback to raw text
-                    return {
-                        "success": True,
-                        "response": response.text,
-                        "format": "text",
-                        "warning": "Expected JSON but got raw text"
-                    }
+                if 'application/json' in normalized_content_type:
+                    print("Detected JSON format response")
+                    try:
+                        json_response = response.json()
+                        return {
+                            "success": True,
+                            "response": json_response,
+                            "format": "json"
+                        }
+                    except json.JSONDecodeError as e:
+                        print(f"JSON parsing failed: {e}")
+                        text_body = response.text
+                        return {
+                            "success": True,
+                            "response": text_body,
+                            "format": "text",
+                            "warning": "Expected JSON but got raw text"
+                        }
 
-            else:
                 print("Detected raw text response")
-                # Fallback to raw text
-                if response.text.strip():
+                text_body = response.text
+                if text_body.strip():
                     return {
                         "success": True,
-                        "response": response.text,
+                        "response": text_body,
                         "format": "text"
                     }
-                else:
-                    return {
-                        "error": True,
-                        "message": "Empty response received",
-                        "status_code": response.status_code
-                    }
 
-        elif response.status_code == 401:
-            return {
-                "error": True,
-                "status_code": response.status_code,
-                "message": "Authentication failed - JWT token may be expired",
-                "suggestion": "Try refreshing the JWT token"
-            }
+                return {
+                    "error": True,
+                    "message": "Empty response received",
+                    "status_code": response.status_code
+                }
 
-        elif response.status_code == 404:
-            return {
-                "error": True,
-                "status_code": response.status_code,
-                "message": "Session not found - session may have expired",
-                "suggestion": "Create a new session"
-            }
+            if response.status_code == 401:
+                return {
+                    "error": True,
+                    "status_code": response.status_code,
+                    "message": "Authentication failed - JWT token may be expired",
+                    "suggestion": "Try refreshing the JWT token"
+                }
 
-        else:
+            if response.status_code == 404:
+                return {
+                    "error": True,
+                    "status_code": response.status_code,
+                    "message": "Session not found - session may have expired",
+                    "suggestion": "Create a new session"
+                }
+
             return {
                 "error": True,
                 "status_code": response.status_code,
@@ -180,6 +217,7 @@ def ask_ai_stream(jwt_token, session_id, ai_command_text, content, content_type=
             "suggestion": "Check logs for more details"
         }
 
+
 def test_ask_ai_with_fallbacks(jwt_token, session_id, ai_command_text, content):
     """
     Test Ask AI with multiple content types as fallbacks
@@ -192,13 +230,15 @@ def test_ask_ai_with_fallbacks(jwt_token, session_id, ai_command_text, content):
     for content_type in content_types:
         print(f"\nTrying content type: {content_type}")
 
-        result = ask_ai_stream(jwt_token, session_id, ai_command_text, content, content_type)
+        result = ask_ai_stream(jwt_token, session_id,
+                               ai_command_text, content, content_type)
 
         if result.get("success"):
             print(f"✅ Success with content type: {content_type}")
             return result
         else:
-            print(f"❌ Failed with {content_type}: {result.get('message', 'Unknown error')}")
+            print(
+                f"❌ Failed with {content_type}: {result.get('message', 'Unknown error')}")
 
     # If all content types fail, return the last error
     return {
